@@ -32,6 +32,9 @@
         'data/mail_template_data2.xml',
         'security/station_security.xml',
     ],
+    'external_dependencies': {
+        'python': ['pyodbc'],
+    },
     # only loaded in demonstration mode
     'demo': [
         'demo/demo.xml',
