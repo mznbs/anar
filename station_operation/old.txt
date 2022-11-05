@@ -1,0 +1,71 @@
+
+sql_get_tank_measures = """
+SELECT TankMeasurements.TankCode, GradeSpecifics.Name, SUM(CAST((CASE WHEN [difference] > (0) THEN difference ELSE 0 END) AS float)) AS [in1], SUM(CAST((CASE WHEN [difference] > (0) THEN 0 ELSE difference END) AS float))
+                  AS out
+FROM     TankMeasurements INNER JOIN
+                  GradeSpecifics ON TankMeasurements.GradeSpecificID = GradeSpecifics.GradeSpecificID
+WHERE  (TankMeasurements.StationID = 1) AND (NOT (TankMeasurements.difference = 0))
+GROUP BY TankMeasurements.TankCode, TankMeasurements.Shift, GradeSpecifics.Name
+HAVING (TankMeasurements.Shift = N'2022082301')
+"""
+
+
+sql_update_tank_diff = """
+UPDATE TankMeasurements
+SET          difference = View_calcTankDiff.diff
+FROM     View_calcTankDiff INNER JOIN
+                  TankMeasurements ON View_calcTankDiff.id = TankMeasurements.ID
+WHERE  (TankMeasurements.difference = - 1) OR
+                  (TankMeasurements.difference IS NULL)
+"""
+
+
+
+ def create_salesxx(self):
+        cursor = cnxn.cursor()
+        cursor.execute("""
+             SELECT TOP (1) OilTransactions.ID, OilTransactions.StationID, OilTransactions.GunId, OilTransactions.TType, OilTransactions.TrueTime,   OilTransactions.GradeSpecificID  , OilTransactions.Volume,
+                      OilTransactions.BAL, OilTransactions.AMN, OilTransactions.PPU, OilTransactions.EmployeeID, OilTransactions.VolumeTotal,   OilTransactions.POSTTC,
+                       OilTransactions.TruelyPay ,   TransactionTypes.TransactionTypeDesc_en,
+                      GradeSpecifics.Name, GradeSpecifics.Code
+    FROM     OilTransactions INNER JOIN
+                      TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
+                      GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID
+    WHERE  (OilTransactions.GunId = 5) AND (NOT (OilTransactions.Volume = 0)) AND (OilTransactions.isIntegratedWithERP IS NULL OR
+                      OilTransactions.isIntegratedWithERP = 0)
+    ORDER BY OilTransactions.ID DESC
+             """)
+        rows = cursor.fetchall()
+        print("readed : " + str(len(rows)))
+        for row in rows:
+            print(row.GunId)
+            product = self.env['product.product'].search([('name', '=', row.Name)])[0]
+            vals = {
+                'name': 'virtual station customer',
+                'state': "draft",
+                'partner_id': 2,
+                'date_order': row.TrueTime,
+                'create_date': row.TrueTime,
+                'order_line': [
+                    (0, 0, {
+                        'product_id': product.id,
+                        'name': row.Code,
+                        'product_uom_qty': row.Volume,
+                        'price_unit': row.PPU,
+                        'create_date': row.TrueTime,
+                    }),
+                    # Command.create({
+                    #     'product_id': 1,
+                    #     'product_uom_qty': 12.5,
+                    #     'price_unit': 2,
+                    # })
+                ]
+            }
+            res = self.env['sale.order'].create(vals)
+
+            cursor.execute("UPDATE [dbo].[OilTransactions] SET [isIntegratedWithERP] = 1 WHERE ID=" + str(row.ID))
+            cnxn.commit()
+
+        # if self.res_model and self.res_id:
+        #     return self.env[self.res_model].browse(self.res_id).get_formview_action()
+        # return False

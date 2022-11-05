@@ -1,0 +1,191 @@
+<odoo>
+    <data>
+        <record id="station_closing_view_search" model="ir.ui.view">
+            <field name="name">station_day_end_close.search</field>
+            <field name="model">station_operation.station_day_end_close</field>
+            <field name="arch" type="xml">
+                <search string="Plan">
+                    <field name="name"/>
+                    <field name="date_of_closing"/>
+                    <separator/>
+                    <filter string="Saud 1" name="inactive" domain="[('station', 'ilike', 'Saud 1')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Date Of Day End" name="date_of_closing" domain="[('station', '=', '1')]"
+                                context="{'group_by':'date_of_closing'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+
+        <!-- explicit list view definition -->
+        <record model="ir.ui.view" id="station_operation.list">
+            <field name="name">station_operation list</field>
+            <field name="model">station_operation.station_day_end_close</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="station"/>
+                    <field name="date_of_closing"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="station_day_end_close_form">
+            <field name="name">station_operation.station_day_end_close</field>
+            <field name="model">station_operation.station_day_end_close</field>
+            <field name="arch" type="xml">
+                <form string="day end closing">
+                    <div class="oe_button_box" name="button_box">
+                        <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
+                                name="calc_all_sales"/>
+<!--                         -->
+                        <button string="Create Sales" icon="fa-circle text-success" type="object" name="create_sales"/>
+                                                <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
+
+                        <button string="Create Purchase " icon="fa-file-text-o" type="object"
+                                name="create_purch"/>
+<!--  ⛽ 🫧🪫  🔋  -->
+
+
+
+                        <button string="Send Mail" icon="fa-paper-plane" type="object"
+                                name="sendMail"/>
+<!--                        <button string="Send Mail" icon="fa-star" type="object"-->
+<!--                                name="sendMail"/>-->
+
+<!--                        <button string="Send Mail" icon="fa-files-o" type="object"-->
+<!--                                name="sendMail"/>-->
+
+
+                    </div>
+                    <group>
+                        <field name="name"/>
+                        <field name="station"/>
+                        <field name="date_of_closing"/>
+                    </group>
+                    <notebook>
+                        <page string="Sales Transactions">
+                            <group>
+                                <field name="station_day_end_close_lines_sale_ids">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="qty"/>
+                                        <!--   <field name="forman_qty"/>-->
+                                        <field name="unit_price"/>
+                                        <field name="line_amount"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="Sales Transactions by gun">
+                            <group>
+                                <field name="station_day_end_close_lines_sale_by_gun_ids">
+                                    <tree editable="bottom">
+                                        <field name="product_id"/>
+                                        <field name="qty"/>
+                                        <!--<field name="forman_qty"/>-->
+                                        <field name="unit_price"/>
+                                        <field name="line_amount"/>
+                                        <field name="type"/>
+                                        <field name="gun"/>
+
+                                        <field name="opening_reading"/>
+                                        <field name="closing_reading"/>
+                                        <field name="reading_diff"/>
+                                        <field name="reading_vs_qty"/>
+                                        <field name="tank_code"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                        <page string="Tanks Transactions">
+                            <group>
+                                <field name="station_day_end_close_tank_lines_ids">
+                                    <tree decoration-warning="not (qty_evaporation &gt; qty_evaporation_allowed)"
+                                          decoration-danger="(qty_evaporation &gt; qty_evaporation_allowed)">
+                                        <field name="tank"/>
+                                        <field name="qty_in"/>
+                                        <field name="opening_qty"/>
+                                        <field name="closing_qty"/>
+                                        <field name="tank_guns_total_sales"/>
+                                        <field name="qty_evaporation"/>
+                                        <field name="qty_evaporation_allowed"/>
+                                        <field name="line_detail_ids" widget="many2many_tags"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+
+
+                        <page string="So">
+                            <group>
+                                <field name="sales_order_ids" create="False" delete="True" editable="False">
+                                    <tree create="False" delete="True" editable="False">
+                                        <field name="id"/>
+                                        <field name="name"/>
+                                        <field name="amount_total"/>
+                                        <!--      <field name="sale_order_line_ids"/>-->
+                                    </tree>
+                                </field>
+                            </group>
+
+                            <group>
+                                <field name="purch_order_ids">
+                                    <tree create="False" delete="True" editable="False">
+                                        <field name="id"/>
+                                        <field name="name"/>
+                                        <field name="amount_total"/>
+                                        <!--      <field name="sale_order_line_ids"/>-->
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- actions opening views on models -->
+        <record model="ir.actions.act_window" id="station_operation.action_window">
+            <field name="name">Day End Closings</field>
+            <field name="res_model">station_operation.station_day_end_close</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="station_closing_view_search"/>
+        </record>
+
+        <!-- server action to the one above -->
+        <record model="ir.actions.server" id="station_operation.action_server">
+            <field name="name">station_operation server</field>
+            <field name="model_id" ref="model_station_operation_station_day_end_close"/>
+            <field name="state">code</field>
+            <field name="code">
+                action = {
+                "type": "ir.actions.act_window",
+                "view_mode": "tree,form",
+                "res_model": model._name,
+                }
+            </field>
+        </record>
+
+        <!-- Top menu item -->
+        <menuitem name="Stations Operations" id="station_operation.menu_root"
+
+                  web_icon="station_operation,static\src\image\odoo_icon.png"
+        />
+        <!-- menu categories -->
+        <menuitem name="Transactions" id="station_operation.trx" parent="station_operation.menu_root"/>
+
+
+        <!--        <menuitem name="Menu 2" id="station_operation.menu_2" parent="station_operation.menu_root"/>-->
+        <!-- actions -->
+        <menuitem name="Day End Closing" id="station_operation.day_end_closing" parent="station_operation.trx"
+                  action="station_operation.action_window"/>
+
+
+        <!--        <menuitem name="Server to list" id="station_operation" parent="station_operation.menu_2"-->
+        <!--                  action="station_operation.action_server"/>-->
+    </data>
+</odoo>

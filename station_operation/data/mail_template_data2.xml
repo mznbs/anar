@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="False">
+        <!-- Email template for reset password -->
+        <record id="station_dec_stander" model="mail.template">
+            <field name="name">Station Closing</field>
+            <field name="model_id" ref="station_operation.model_station_operation_station_day_end_close"/>
+            <field name="email_from">{{ (object.invoice_user_id.email_formatted or user.email_formatted) }}</field>
+            <field name="subject">{{ object.company_id.name }} Station Closing {{ object.date_of_closing or 'n/a'}}            </field>
+            <field name="description">Sent to head office with their closing details</field>
+            <field name="body_html" type="html">
+                <table border="0" cellpadding="0" cellspacing="0"
+                       style="padding-top: 16px; background-color: #FFFFFF; font-family:Verdana, Arial,sans-serif; color: #454748; width: 100%; border-collapse:separate;">
+                    <tr>
+                        <td align="center">
+                            <table border="0" cellpadding="0" cellspacing="0" width="590"
+                                   style="padding: 16px; background-color: #FFFFFF; color: #454748; border-collapse:separate;">
+                                <tbody>
+                                    <!-- HEADER -->
+                                    Please use the following details for station
+                                    <span style="font-weight:bold;" t-out="object.station or ''"></span>
+                                    closing : <span style="font-weight:bold;"
+                                                    t-out="object.date_of_closing or ''"></span>.
+
+                                    <!-- CONTENT -->
+                                    <!-- FOOTER -->
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- POWERED BY -->
+                </table>
+
+
+                <h3>
+                    <span>
+                        Tanks 🛢️
+                    </span>
+                </h3>
+                <table class="table table-sm">
+                    <thead>
+                        <tr bgcolor="#00A4BD">
+                            <th>Tank</th>
+                            <th>Product</th>
+                            <th>Evaporation</th>
+                            <th>Evaporation Allowed</th>
+                            <th>Opening</th>
+                            <th>Closing</th>
+                            <th>Sales ⛽</th>
+                            <th>Receiving</th>
+                            <!--                            <th t-if="o.state in ('progress', 'to_close','done')"-->
+                            <!--                                t-attf-class="{{ 'text-end' if not has_product_barcode else '' }}">Consumed-->
+                            <!--                            </th>-->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="object.station_day_end_close_tank_lines_ids" t-as="raw_line">
+                            <td>
+                                <span t-field="raw_line.tank"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.product_id"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.qty_evaporation"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.qty_evaporation_allowed"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.opening_qty"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.closing_qty"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.tank_guns_total_sales"/>
+                            </td>
+                            <td>
+                                <span t-field="raw_line.qty_in"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
+                <h3>
+                    <span>
+                        Guns ⛽
+                    </span>
+                </h3>
+                <table class="table table-sm">
+                    <thead>
+                        <tr bgcolor="#00A4BD">
+                            <th>Tank</th>
+                            <th>gun</th>
+                            <th>opening_reading</th>
+                            <th>closing_reading</th>
+                            <th>reading_diff</th>
+                            <th>reading_vs_qty</th>
+
+                            <!--                            <th t-if="o.state in ('progress', 'to_close','done')"-->
+                            <!--                                t-attf-class="{{ 'text-end' if not has_product_barcode else '' }}">Consumed-->
+                            <!--                            </th>-->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="object.station_day_end_close_lines_sale_by_gun_ids" t-as="gun_line">
+                            <td>
+                                <span t-field="gun_line.tank_code"/>
+                            </td>
+                            <td>
+                                <span t-field="gun_line.gun"/>
+                            </td>
+                            <td>
+                                <span t-field="gun_line.opening_reading"/>
+                            </td>
+                            <td>
+                                <span t-field="gun_line.closing_reading"/>
+                            </td>
+                            <td>
+                                <span t-field="gun_line.reading_diff"/>
+                            </td>
+                            <td>
+                                <span t-field="gun_line.reading_vs_qty"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--                             <h3>-->
+<!--                    <span>-->
+<!--                        Tanks 🛢️-->
+<!--                    </span>-->
+<!--                </h3>-->
+<!--                <table class="table table-sm">-->
+<!--                    <thead>-->
+<!--                        <tr bgcolor="#00A4BD">-->
+<!--                            <th>Tank</th>-->
+<!--                            <th>Product</th>-->
+<!--                            <th>Evaporation</th>-->
+<!--                            <th>Evaporation Allowed</th>-->
+<!--                            <th>Opening</th>-->
+<!--                            <th>Closing</th>-->
+<!--                            <th>Sales ⛽</th>-->
+<!--                            <th>Receiving</th>-->
+<!--                            &lt;!&ndash;                            <th t-if="o.state in ('progress', 'to_close','done')"&ndash;&gt;-->
+<!--                            &lt;!&ndash;                                t-attf-class="{{ 'text-end' if not has_product_barcode else '' }}">Consumed&ndash;&gt;-->
+<!--                            &lt;!&ndash;                            </th>&ndash;&gt;-->
+<!--                        </tr>-->
+<!--                    </thead>-->
+<!--                    <tbody>-->
+<!--                        <tr t-foreach="object.station_day_end_close_tank_lines_ids" t-as="raw_line">-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.tank"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.product_id"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.qty_evaporation"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.qty_evaporation_allowed"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.opening_qty"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.closing_qty"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.tank_guns_total_sales"/>-->
+<!--                            </td>-->
+<!--                            <td>-->
+<!--                                <span t-field="raw_line.qty_in"/>-->
+<!--                            </td>-->
+
+<!--                            <td colspan="6">-->
+<!--                                                <div t-foreach="object.station_day_end_close_lines_sale_by_gun_ids" t-as="gun_line">-->
+<!--                                <span t-field="gun_line.tank_code"/>-->
+<!--                                <span t-field="gun_line.gun"/>-->
+<!--                                <span t-field="gun_line.opening_reading"/>-->
+<!--                                <span t-field="gun_line.closing_reading"/>-->
+<!--                                <span t-field="gun_line.reading_diff"/>-->
+<!--                                <span t-field="gun_line.reading_vs_qty"/>-->
+<!--                                                        </div>-->
+
+<!--                            </td>-->
+
+<!--                        </tr>-->
+
+<!--                    </tbody>-->
+<!--                </table>-->
+
+
+
+
+
+
+
+
+
+
+
+
+            </field>
+        </record>
+
+
+    </data>
+</odoo>

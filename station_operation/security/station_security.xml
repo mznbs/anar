@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!--    <record model="ir.module.category" id="base.module_category_accounting_accounting">-->
+        <!--        <field name="description">Helps you handle your accounting needs, if you are not an accountant, we suggest you to install only the Invoicing.</field>-->
+        <!--        <field name="sequence">7</field>-->
+        <!--    </record>-->
+
+        <record id="station_operation_manager" model="res.groups">
+            <field name="name">Station Manager</field>
+            <field name="category_id" ref="base.module_category_hidden"/>
+        </record>
+
+
+    </data>
+</odoo>

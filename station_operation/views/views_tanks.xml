@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+
+        <!-- tank line details recivings -->
+        <record model="ir.ui.view" id="station_operation.list">
+            <field name="name">dec tank line details recivings</field>
+            <field name="model">station_operation.station.dec.tank.lines.details</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="common_name"/>
+                    <field name="openingQty"/>
+                    <field name="closingQty"/>
+                    <field name="startTime"/>
+                    <field name="endTime"/>
+                    <field name="totalIn"/>
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</odoo>
