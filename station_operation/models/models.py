@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-# from customAddons.station_operation.models.models_tanks import sql_get_tank_measures2, sql_tank_reciving, \
-#     sql_update_tank_diff
 from odoo import models, fields, api
 # import pyodbc
 
@@ -25,13 +23,13 @@ cnxn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar
                        database='Center')
 
 def _get_stations(self):
-    sql_get_station = "select * from dbo.Stations"
+    sql_get_station = "select Name from dbo.Stations"
     cursor = cnxn.cursor()
     cursor.execute(sql_get_station)
     rows = cursor.fetchall()
     list = []
     for row in rows:
-        list.append((row.Name, row.Name))
+        list.append((row[0], row[0]))#Name
     return list
 
 
@@ -40,9 +38,6 @@ def sql_run2(sql):
     cursor.execute(sql)
     cursor.commit()
     cursor.close()
-
-
-
 
 
 # linking with the main product table
@@ -70,14 +65,9 @@ class station_day_end_close(models.Model):
         tracking=True,
         default=lambda self: self.env.user,
     )
-    # qty91cash = fields.Float(default=0.0, help="TotalSalesOf91", string='91 Qty Cash')
-    # qty95cash = fields.Float(default=0.0, help="TotalSalesOf95", string='95 Qty Cash')
-    # qty91credit = fields.Float(default=0.0, help="TotalSalesOf91", string='91 Qty Credit')
-    # qty95credit = fields.Float(default=0.0, help="TotalSalesOf95", string='95 Qty Credit')
 
     station_day_end_close_tank_lines_ids = fields.One2many('station_operation.station_day_end_close_tank_lines',
                                                            'parent_id')
-
     sales_order_ids = fields.One2many('sale.order',
                                       'parent_dec_id')
     purch_order_ids = fields.One2many('purchase.order',
@@ -98,29 +88,24 @@ class station_day_end_close(models.Model):
     #     #self.calc_sales_qty()
     #     self.calc_all_sales()
 
-    def sql_run3(self, sql):
-        conn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
-                               database='Center')
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        row = cursor.fetchone()
-        conn.commit()
-        conn.close()
-
     def test_sql3(self):
         sql = """
-    INSERT INTO [dbo].[temp]           ([name])
-         VALUES           ('test')
-    """
-        import pymssql
-        conn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
-                               database='Center')
-        cursor = conn.cursor()
+            INSERT INTO [dbo].[temp]           ([name])
+                 VALUES           ('test')
+            """
+        cursor = cnxn.cursor()
         cursor.execute(sql)
-        #row = cursor.fetchone()
-        conn.commit()
-        conn.close()
-        #self.sql_run3(sql)
+        cnxn.commit()
+        cnxn.close()
+
+    def run_sql_pymssql(self,sql):
+        cnxn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
+                               database='Center')
+        cursor = cnxn.cursor()
+        cursor.execute(sql)
+        cnxn.commit()
+        cnxn.close()
+
 
 
     def calc_all_sales(self):
@@ -133,8 +118,19 @@ class station_day_end_close(models.Model):
         self.station_day_end_close_lines_sale_by_gun_ids.unlink()
 
         sql_get_sales_sum_by_gun = """
-            SELECT OilTransactions.StationID, OilTransactions.TType, SUM(OilTransactions.AMN) AS valueSr, OilTransactions.PPU AS unitPrice, SUM(OilTransactions.Volume) AS Volume, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, 
-                      GradeSpecifics.Code, OilTransactions.GunId, dbo.fn_get_hose_opening(MAX(OilTransactions.ID)) AS opening_reading, dbo.fn_get_hose_closing(MAX(OilTransactions.ID)) AS closing_reading, GunConfig_station.TANKCODE
+            SELECT 
+            OilTransactions.StationID, --0
+            OilTransactions.TType,      --1
+             SUM(OilTransactions.AMN) AS valueSr,--2
+             OilTransactions.PPU AS unitPrice, --3
+             SUM(OilTransactions.Volume) AS Volume,--4
+              TransactionTypes.TransactionTypeDesc_en,--5
+               GradeSpecifics.Name,  --6 
+                      GradeSpecifics.Code, --7
+                       OilTransactions.GunId, --8
+                       dbo.fn_get_hose_opening(MAX(OilTransactions.ID)) AS opening_reading, --9
+                       dbo.fn_get_hose_closing(MAX(OilTransactions.ID)) AS closing_reading, --10
+                       GunConfig_station.TANKCODE --11
     FROM     OilTransactions INNER JOIN
                       TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
                       GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID INNER JOIN
@@ -147,7 +143,6 @@ class station_day_end_close(models.Model):
         sql = sql_get_sales_sum_by_gun % (
             str(self.date_of_closing.month), str(self.date_of_closing.day)
             , str(self.date_of_closing.year)
-
         )
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -156,24 +151,31 @@ class station_day_end_close(models.Model):
         for row in rows:
             # create lines
             vals = {
-                'product_id': self.env['product.product'].search([('name', '=', row.Name)])[0].id,
+                'product_id': self.env['product.product'].search([('name', '=', row[6])])[0].id,#row.Name
                 'parent_id': self.id,
-                'type': row.TransactionTypeDesc_en,
-                'gun': row.GunId,
-                'qty': row.Volume,
-                'unit_price': row.unitPrice,
-                'opening_reading': row.opening_reading,
-                'closing_reading': row.closing_reading,
-                'tank_code': row.TANKCODE,
-                'line_amount': row.Volume * row.unitPrice
+                'type': row[5],#.TransactionTypeDesc_en
+                'gun': row[8],#GunId
+                'qty': row[4],#Volume
+                'unit_price': row[3],#unitPrice
+                'opening_reading': row[9],#opening_reading
+                'closing_reading': row[10],#closing_reading
+                'tank_code': row[11],#TANKCODE
+                'line_amount': row[4] * row[3] #row.Volume * row.unitPrice
             }
             self.env['station_operation.station_day_end_close_sale_by_gun_line'].create(vals)
             print("done : ")
 
 
     def calc_sales_qty(self):
-        sql_get_sales_sum = """SELECT   OilTransactions.StationID, OilTransactions.TType, SUM(OilTransactions.AMN) AS valueSr, OilTransactions.PPU AS unitPrice, SUM(OilTransactions.Volume) AS Volume, TransactionTypes.TransactionTypeDesc_en, 
-                              GradeSpecifics.Name, GradeSpecifics.Code
+        sql_get_sales_sum = """SELECT  
+         OilTransactions.StationID,--0
+          OilTransactions.TType, --1
+          SUM(OilTransactions.AMN) AS valueSr,--2
+           OilTransactions.PPU AS unitPrice,--3
+            SUM(OilTransactions.Volume) AS Volume,--4
+             TransactionTypes.TransactionTypeDesc_en, --5
+                              GradeSpecifics.Name,--6
+                               GradeSpecifics.Code--7
             FROM     OilTransactions INNER JOIN
                               TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
                               GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID
@@ -193,24 +195,18 @@ class station_day_end_close(models.Model):
         self.station_day_end_close_lines_sale_ids.unlink()
 
         for row in rows:
-            # if row.Name == '91':
-            #     self.qty91cash += row.Volume
-            # if row.Name == '95':
-            #     self.qty95cash += row.Volume
             # create lines
             vals = {
-                'product_id': self.env['product.product'].search([('name', '=', row.Name)])[0].id,
+                'product_id': self.env['product.product'].search([('name', '=', row[6])])[0].id,#Name
                 'parent_id': self.id,
-                'type': row.TransactionTypeDesc_en,
-                'qty': row.Volume,
-                'unit_price': row.unitPrice,
-                'line_amount': row.Volume * row.unitPrice
+                'type': row[5],#TransactionTypeDesc_en
+                'qty': row[4],#Volume
+                'unit_price': row[3],#unitPrice
+                'line_amount': row[4] * row[3] #row.Volume * row.unitPrice
             }
             self.env['station_operation.station_day_end_close_sale_line'].create(vals)
             print("done : ")
 
-            # cursor.execute("UPDATE [dbo].[OilTransactions] SET [isIntegratedWithERP] = 1 WHERE ID=" + str(row.ID))
-            # cnxn.commit()
 
 
     def create_sales(self):
@@ -314,7 +310,7 @@ class station_day_end_close(models.Model):
 
 
     def prepare_tanks(self):
-        sql_run2(sql_update_tank_diff)
+        self.run_sql_pymssql(sql_update_tank_diff)
 
         # clear lines
         self.station_day_end_close_tank_lines_ids.unlink()
@@ -324,45 +320,59 @@ class station_day_end_close(models.Model):
         year = str(self.date_of_closing.year)
 
         cursor_tanks = cnxn.cursor()
-        # cursor.execute(sql_get_tank_measures)
+
+        sql_get_tank_measures2 = """
+        SELECT TankCode,--0
+         item,--1
+          StationID,--2
+          [dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty,--3
+          [dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty--4
+        FROM     View_Tank_master
+        where StationName='%s'
+        """
         sql_statment = sql_get_tank_measures2 % (day, mth, year, day, mth, year, self.station)
         cursor_tanks.execute(sql_statment)
-
         tanks = cursor_tanks.fetchall()
-
         for tank in tanks:
-            if tank.opening_qty:
+            if tank[3]:#opening_qty
                 tank_guns_total_sales = 0.0
-                for gn in filter(lambda x: x.tank_code == str(tank.TankCode),
+                for gn in filter(lambda x: x.tank_code == str(tank[0]),#TankCode
                                  self.station_day_end_close_lines_sale_by_gun_ids):
                     tank_guns_total_sales = tank_guns_total_sales + gn.qty
 
                 vals = {
-                    'tank': tank.TankCode,
-                    'opening_qty': tank.opening_qty,
-                    'closing_qty': tank.closing_qty,
+                    'tank': tank[0],#TankCode
+                    'opening_qty': tank[3],#opening_qty
+                    'closing_qty': tank[4],#closing_qty
                     # 'qty_in': row.in1,
                     'parent_id': self.id,
                     'tank_guns_total_sales': tank_guns_total_sales,
-                    'product_id': self.env['product.product'].search([('name', '=', tank.item)])[0].id,  # new
+                    'product_id': self.env['product.product'].search([('name', '=', tank[1])])[0].id,  #  item
 
                 }
                 res = self.env['station_operation.station_day_end_close_tank_lines'].create(vals)
 
-                # tank details
+                # tank details to get one receiving
                 cursor_receiving = cnxn.cursor()
+
+                # as openingQty, --0
+                # as closingQty, --1
+                # as totalIn, --2
+                # as startTime, --3
+                # as endTime - -4
+
                 sql_statment_receiving = sql_tank_reciving % (
-                    tank.TankCode, day, mth, year)  # % (day, mth, year, day, mth, year, self.station)
+                    tank[0], day, mth, year)  #TankCode # % (day, mth, year, day, mth, year, self.station)
                 cursor_receiving.execute(sql_statment_receiving)
                 tanks_receiving = cursor_receiving.fetchall()
                 for tank_receive in tanks_receiving:
                     vals_receiving = {
                         'parent_tank_line_id': res.id,
-                        'openingQty': tank_receive.openingQty,
-                        'closingQty': tank_receive.closingQty,
-                        'totalIn': tank_receive.totalIn,
-                        'startTime': tank_receive.startTime,
-                        'endTime': tank_receive.endTime,
+                        'openingQty': tank_receive[0],#openingQty
+                        'closingQty': tank_receive[1],#closingQty
+                        'totalIn': tank_receive[2],#totalIn
+                        'startTime': tank_receive[3],#startTime
+                        'endTime': tank_receive[4],#endTime
                     }
                     self.env['station_operation.station.dec.tank.lines.details'].create(vals_receiving)
 
@@ -494,14 +504,16 @@ class station_day_end_close_sale_by_gun_line(models.Model):
         for row in self:
             row.reading_vs_qty = abs(row.reading_diff - row.qty)
 
-
-sql_get_tank_measures2 = """
-SELECT TankCode, item, StationID
-,[dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty
-,[dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty
-FROM     View_Tank_master
-where StationName='%s'
-"""
+#
+# sql_get_tank_measures2 = """
+# SELECT TankCode,--0
+#  item,--1
+#   StationID,--2
+#   [dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty,--3
+#   [dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty--4
+# FROM     View_Tank_master
+# where StationName='%s'
+# """
 
 sql_tank_reciving = """
 declare @date_time_start_in as datetime
@@ -532,7 +544,11 @@ SELECT top 1 @closing_after_receiving = OilVol  FROM     TankStatus_log_Station 
 
  set @total_in =  @closing_after_receiving - @opening_before_receiving
 
-select  @opening_before_receiving as openingQty  ,  @closing_after_receiving as closingQty,  @total_in as totalIn ,   @date_time_start_in as startTime , @date_time_stop_in  as endTime 
+select  @opening_before_receiving as openingQty  ,--0
+  @closing_after_receiving as closingQty,--1
+    @total_in as totalIn ,--2
+       @date_time_start_in as startTime ,--3
+        @date_time_stop_in  as endTime --4
 
 """
 
