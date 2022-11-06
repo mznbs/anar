@@ -39,12 +39,20 @@
                     <div class="oe_button_box" name="button_box">
                         <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
                                 name="calc_all_sales"/>
+                     <button string="  test pymssql" type="object" icon="fa-refresh text-primary"
+                                name="test_sql3"/>
+
+
 <!--                         -->
                         <button string="Create Sales" icon="fa-circle text-success" type="object" name="create_sales"/>
                                                 <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
 
                         <button string="Create Purchase " icon="fa-file-text-o" type="object"
-                                name="create_purch"/>
+                                name="create_purch"
+
+confirm = "This will assign leads to all members. Do you want to proceed?"
+
+                        />
 <!--  ⛽ 🫧🪫  🔋  -->
 
 

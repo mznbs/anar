@@ -2,7 +2,9 @@
 # from customAddons.station_operation.models.models_tanks import sql_get_tank_measures2, sql_tank_reciving, \
 #     sql_update_tank_diff
 from odoo import models, fields, api
-import pyodbc
+# import pyodbc
+
+import pymssql
 
 sql_update_hose_reading_diff = """
 UPDATE OilTransactions
@@ -12,14 +14,15 @@ FROM     [View_calcHoseReadingDiff] INNER JOIN
 WHERE  (OilTransactions.difference = - 1) OR
                   (OilTransactions.difference IS NULL)
 """
-
-cnxnxxxx = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-H7EA1N4;DATABASE=center5;Trusted_Connection=yes;')
+#
+# cnxnxxxx = pyodbc.connect(
+#     'DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-H7EA1N4;DATABASE=center5;Trusted_Connection=yes;')
 
 # live  37.224.107.7     dbanaradmin     anar#123456$admin
-cnxn = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};SERVER=37.224.107.7;DATABASE=Center;UID=dbanaradmin;PWD=anar#123456$admin;')
+# cnxn = pyodbc.connect(    'DRIVER={ODBC Driver 17 for SQL Server};SERVER=37.224.107.7;DATABASE=Center;UID=dbanaradmin;PWD=anar#123456$admin;')
 
+cnxn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
+                       database='Center')
 
 def _get_stations(self):
     sql_get_station = "select * from dbo.Stations"
@@ -37,6 +40,9 @@ def sql_run2(sql):
     cursor.execute(sql)
     cursor.commit()
     cursor.close()
+
+
+
 
 
 # linking with the main product table
@@ -92,24 +98,50 @@ class station_day_end_close(models.Model):
     #     #self.calc_sales_qty()
     #     self.calc_all_sales()
 
+    def sql_run3(self, sql):
+        conn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
+                               database='Center')
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        row = cursor.fetchone()
+        conn.commit()
+        conn.close()
+
+    def test_sql3(self):
+        sql = """
+    INSERT INTO [dbo].[temp]           ([name])
+         VALUES           ('test')
+    """
+        import pymssql
+        conn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar#123456$admin',
+                               database='Center')
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        #row = cursor.fetchone()
+        conn.commit()
+        conn.close()
+        #self.sql_run3(sql)
+
+
     def calc_all_sales(self):
         self.calc_sales_qty_by_gun()
         self.calc_sales_qty()
+
 
     def calc_sales_qty_by_gun(self):
         # clear lines
         self.station_day_end_close_lines_sale_by_gun_ids.unlink()
 
         sql_get_sales_sum_by_gun = """
-        SELECT OilTransactions.StationID, OilTransactions.TType, SUM(OilTransactions.AMN) AS valueSr, OilTransactions.PPU AS unitPrice, SUM(OilTransactions.Volume) AS Volume, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, 
-                  GradeSpecifics.Code, OilTransactions.GunId, dbo.fn_get_hose_opening(MAX(OilTransactions.ID)) AS opening_reading, dbo.fn_get_hose_closing(MAX(OilTransactions.ID)) AS closing_reading, GunConfig_station.TANKCODE
-FROM     OilTransactions INNER JOIN
-                  TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
-                  GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID INNER JOIN
-                  GunConfig_station ON OilTransactions.GunId = GunConfig_station.GUNCODE
-WHERE  (CAST(OilTransactions.TrueTime AS date) = '%s/%s/%s') AND (NOT (OilTransactions.Volume = 0))
-GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code, OilTransactions.GunId, GunConfig_station.TANKCODE
-"""
+            SELECT OilTransactions.StationID, OilTransactions.TType, SUM(OilTransactions.AMN) AS valueSr, OilTransactions.PPU AS unitPrice, SUM(OilTransactions.Volume) AS Volume, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, 
+                      GradeSpecifics.Code, OilTransactions.GunId, dbo.fn_get_hose_opening(MAX(OilTransactions.ID)) AS opening_reading, dbo.fn_get_hose_closing(MAX(OilTransactions.ID)) AS closing_reading, GunConfig_station.TANKCODE
+    FROM     OilTransactions INNER JOIN
+                      TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
+                      GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID INNER JOIN
+                      GunConfig_station ON OilTransactions.GunId = GunConfig_station.GUNCODE
+    WHERE  (CAST(OilTransactions.TrueTime AS date) = '%s/%s/%s') AND (NOT (OilTransactions.Volume = 0))
+    GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code, OilTransactions.GunId, GunConfig_station.TANKCODE
+    """
 
         cursor = cnxn.cursor()
         sql = sql_get_sales_sum_by_gun % (
@@ -138,17 +170,18 @@ GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.Tran
             self.env['station_operation.station_day_end_close_sale_by_gun_line'].create(vals)
             print("done : ")
 
+
     def calc_sales_qty(self):
         sql_get_sales_sum = """SELECT   OilTransactions.StationID, OilTransactions.TType, SUM(OilTransactions.AMN) AS valueSr, OilTransactions.PPU AS unitPrice, SUM(OilTransactions.Volume) AS Volume, TransactionTypes.TransactionTypeDesc_en, 
-                          GradeSpecifics.Name, GradeSpecifics.Code
-        FROM     OilTransactions INNER JOIN
-                          TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
-                          GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID
-        WHERE  (      (CAST(OilTransactions.TrueTime AS date) = '""" + str(
+                              GradeSpecifics.Name, GradeSpecifics.Code
+            FROM     OilTransactions INNER JOIN
+                              TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
+                              GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID
+            WHERE  (      (CAST(OilTransactions.TrueTime AS date) = '""" + str(
             self.date_of_closing.month) + """/""" + str(self.date_of_closing.day) + """/""" + str(
             self.date_of_closing.year) + """') AND (NOT (OilTransactions.Volume = 0)))
-        GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code
-        """
+            GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code
+            """
 
         cursor = cnxn.cursor()
         cursor.execute(sql_get_sales_sum)
@@ -179,6 +212,7 @@ GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.Tran
             # cursor.execute("UPDATE [dbo].[OilTransactions] SET [isIntegratedWithERP] = 1 WHERE ID=" + str(row.ID))
             # cnxn.commit()
 
+
     def create_sales(self):
         # product91 = self.env['product.product'].search([('name', '=', '91')])[0]
         # product95 = self.env['product.product'].search([('name', '=', '95')])[0]
@@ -207,16 +241,18 @@ GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.Tran
         }
         self.env['sale.order'].create(vals)
 
+
     def sendMail(self):
         public_users = self.env.ref('station_operation.station_operation_manager').users
 
         for user in public_users:
-            #if user.user_has_groups('station_operation.station_operation_manager'):
+            # if user.user_has_groups('station_operation.station_operation_manager'):
             if user.email_normalized:
                 self.send_mail_to_user(user)
         # return {
         #     'warning': {'title': "Warning", 'message': "What is this?", 'type': 'notification'},
         # }
+
 
     def send_mail_to_user(self, user):
         template = self.env.ref('station_operation.station_dec_stander')
@@ -243,6 +279,7 @@ GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.Tran
 
         # user.id
         template.send_mail(self.id, force_send=True, raise_exception=True, email_values=email_values)
+
 
     # _logger.info("Password reset email sent for user <%s> to <%s>", user.login, user.email)
 
@@ -274,6 +311,7 @@ GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.Tran
         # if self.res_model and self.res_id:
         #     return self.env[self.res_model].browse(self.res_id).get_formview_action()
         # return False
+
 
     def prepare_tanks(self):
         sql_run2(sql_update_tank_diff)
@@ -414,6 +452,7 @@ class station_dec_tank_lines_details(models.Model):
         for rec in self:
             rec.common_name = str(rec.totalIn)
 
+
 # class station_dec_tank_lines_details(models.Model):
 #     _name = 'station_operation.station.dec.tank.lines.details'
 #     _description = 'Station Day End Closing Lines'
@@ -434,8 +473,6 @@ class station_dec_tank_lines_details(models.Model):
 #             rec.common_name = str(rec.totalIn)
 
 
-
-
 class station_day_end_close_sale_by_gun_line(models.Model):
     _name = 'station_operation.station_day_end_close_sale_by_gun_line'
     _inherit = "station_operation.station_day_end_close_sale_line"
@@ -449,8 +486,6 @@ class station_day_end_close_sale_by_gun_line(models.Model):
     reading_vs_qty = fields.Float(default=0.0, help="Reading vs Quantity", string='Reading vs Quantity',
                                   compute='_compute_reading_vs_qty')
 
-
-
     def _compute_diff(self):
         for row in self:
             row.reading_diff = row.closing_reading - row.opening_reading
@@ -458,9 +493,6 @@ class station_day_end_close_sale_by_gun_line(models.Model):
     def _compute_reading_vs_qty(self):
         for row in self:
             row.reading_vs_qty = abs(row.reading_diff - row.qty)
-
-
-
 
 
 sql_get_tank_measures2 = """
@@ -503,8 +535,6 @@ SELECT top 1 @closing_after_receiving = OilVol  FROM     TankStatus_log_Station 
 select  @opening_before_receiving as openingQty  ,  @closing_after_receiving as closingQty,  @total_in as totalIn ,   @date_time_start_in as startTime , @date_time_stop_in  as endTime 
 
 """
-
-
 
 sql_update_tank_diff = """  UPDATE TankStatus_log_Station
 SET    difference = View_calcTankDiff.diff

@@ -1,11 +1,11 @@
-import pyodbc
+# import pyodbc
 
 
 
 
-
-cnxn1 = pyodbc.connect(
-    'DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-H7EA1N4;DATABASE=center;Trusted_Connection=yes;')
+#
+# cnxn1 = pyodbc.connect(
+#     'DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-H7EA1N4;DATABASE=center;Trusted_Connection=yes;')
 
 
 
