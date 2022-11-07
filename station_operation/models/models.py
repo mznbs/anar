@@ -33,11 +33,11 @@ def _get_stations(self):
     return list
 
 
-def sql_run2(sql):
-    cursor = cnxn.cursor()
-    cursor.execute(sql)
-    cursor.commit()
-    cursor.close()
+# def sql_run2(sql):
+#     cursor = cnxn.cursor()
+#     cursor.execute(sql)
+#     cursor.commit()
+#     cursor.close()
 
 
 # linking with the main product table
@@ -516,6 +516,7 @@ class station_day_end_close_sale_by_gun_line(models.Model):
 # """
 
 sql_tank_reciving = """
+
 declare @date_time_start_in as datetime
 declare @date_time_stop_in  as datetime
 

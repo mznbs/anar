@@ -39,20 +39,15 @@
                     <div class="oe_button_box" name="button_box">
                         <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
                                 name="calc_all_sales"/>
-                     <button string="  test pymssql" type="object" icon="fa-refresh text-primary"
-                                name="test_sql3"/>
-
-
-<!--                         -->
+<!--                     <button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
+<!--                                name="test_sql3"/>-->
                         <button string="Create Sales" icon="fa-circle text-success" type="object" name="create_sales"/>
                                                 <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
-
                         <button string="Create Purchase " icon="fa-file-text-o" type="object"
                                 name="create_purch"
-
-confirm = "This will assign leads to all members. Do you want to proceed?"
-
                         />
+
+<!--    confirm = "This will assign leads to all members. Do you want to proceed?"-->
 <!--  ⛽ 🫧🪫  🔋  -->
 
 
@@ -181,7 +176,7 @@ confirm = "This will assign leads to all members. Do you want to proceed?"
         <!-- Top menu item -->
         <menuitem name="Stations Operations" id="station_operation.menu_root"
 
-                  web_icon="station_operation,static\src\image\odoo_icon.png"
+                  web_icon="station_operation,static\src\image\icon.png"
         />
         <!-- menu categories -->
         <menuitem name="Transactions" id="station_operation.trx" parent="station_operation.menu_root"/>
