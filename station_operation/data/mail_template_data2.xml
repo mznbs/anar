@@ -17,9 +17,9 @@
                                    style="padding: 16px; background-color: #FFFFFF; color: #454748; border-collapse:separate;">
                                 <tbody>
                                     <!-- HEADER -->
-                                    Please use the following details for station
+                                    Closing Details for station
                                     <span style="font-weight:bold;" t-out="object.station or ''"></span>
-                                    closing : <span style="font-weight:bold;"
+                                    Date : <span style="font-weight:bold;"
                                                     t-out="object.date_of_closing or ''"></span>.
 
                                     <!-- CONTENT -->
@@ -54,7 +54,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr t-foreach="object.station_day_end_close_tank_lines_ids" t-as="raw_line">
+                        <tr t-foreach="object.station_day_end_close_tank_line_ids" t-as="raw_line">
                             <td>
                                 <span t-field="raw_line.tank"/>
                             </td>

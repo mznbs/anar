@@ -9,8 +9,31 @@
         />
         <field name="arch" type="xml">
             <xpath expr="//field[@name='categ_id']" position="before">
-                <field name="evap_loss_accepted" optional="hide"/>
+                <field name="evap_loss_accepted_sales" optional="hide"/>
+                <field name="evap_loss_accepted_receivings" optional="hide"/>
+                <field name="station_operation_icon" optional="hide"/>
             </xpath>
         </field>
     </record>
+
+
+        <record model="ir.ui.view" id="product_station_operation_normal">
+        <field name="name">product_station_operation_normal</field>
+        <field name="model">product.product</field>
+        <field
+                name="inherit_id"
+                ref="product.product_normal_form_view"
+        />
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='categ_id']" position="before">
+                <field name="evap_loss_accepted_sales" optional="hide"/>
+                <field name="evap_loss_accepted_receivings" optional="hide"/>
+                <field name="station_operation_icon" optional="hide"/>
+
+
+            </xpath>
+        </field>
+    </record>
+
+
 </odoo>
