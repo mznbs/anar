@@ -46,7 +46,7 @@
                             <th>Evaporation Allowed</th>
                             <th>Opening</th>
                             <th>Closing</th>
-                            <th>Sales ⛽</th>
+                            <th>Sales</th>
                             <th>Receiving</th>
                             <!--                            <th t-if="o.state in ('progress', 'to_close','done')"-->
                             <!--                                t-attf-class="{{ 'text-end' if not has_product_barcode else '' }}">Consumed-->
@@ -111,6 +111,8 @@
                             </td>
                             <td>
                                 <span t-field="gun_line.gun"/>
+                                <span t-field="gun_line.product_id"/>
+                                <span t-field="gun_line.product_icon"/>
                             </td>
                             <td>
                                 <span t-field="gun_line.opening_reading"/>

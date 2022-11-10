@@ -22,16 +22,32 @@ cnxn = pymssql.connect(server='37.224.107.7', user='dbanaradmin', password='anar
                        database='Center')
 
 
-
-
 def _get_stations(self):
-    sql_get_station = "select Name from dbo.Stations"
+    sql_get_station = """select StationID,--0
+    	Name	--1
+    	,Code	--2
+    	 ,	CityID	--3
+    	  ,	Address--4
+    	   from dbo.Stations"""
+
     cursor = cnxn.cursor()
     cursor.execute(sql_get_station)
     rows = cursor.fetchall()
     list = []
     for row in rows:
-        list.append((row[0], row[0]))  # Name
+        list.append((row[1], row[1]))  # Name
+
+        # station_count = self.env['station_operation.station'].search_count([('id', '=', row[0])]),  # row.Name
+        # if station_count == 0:  # create station
+        #     vals_station = {
+        #         'id': row[0],
+        #         'name': row[1],
+        #         'station_code': row[2],
+        #         # 'city_id': row[3],
+        #         'address': row[4],
+        #     }
+        #     self.env['station_operation.station'].create(vals_station)
+        #     print("done : ")
     return list
 
 
@@ -48,9 +64,25 @@ class station_day_end_close(models.Model):
     _name = 'station_operation.station_day_end_close'
     _description = 'Station Day End Closing Header'
 
+    state = fields.Selection([('new', 'New'),
+                              ('sales_calculated', 'Sales Calculated'),
+                              ('tank_calculated', 'Tank Calculated'),
+                              ('purchase_order_created', 'Purchase Order Created'),
+                              ('sales_order_created', 'Sales Order Created'),
+                              ('closed', 'Closed'),
+                              ], 'Status',
+                             default='new')
+
     name = fields.Char()
     description = fields.Text()
+
+    station_id = fields.Many2one('station_operation.station', string='Station', )
     station = fields.Selection(_get_stations, string='Station', required=True)
+    @api.onchange('station_id')
+    def _onchange_timezone(self):
+       # if self.station and not self.station_id:
+            self.station = self.station_id.name
+
     date_of_closing = fields.Date('Date', required=True)
     company_id = fields.Many2one('res.company', string='Company', index=True, default=lambda self: self.env.company)
     invoice_user_id = fields.Many2one(
@@ -82,6 +114,41 @@ class station_day_end_close(models.Model):
     #     #     #row.search([('1', '=', '1')])
     #     #self.calc_sales_qty()
     #     self.calc_all_sales()
+
+    def get_stations(self):
+        sql_get_station = """select StationID,--0
+        	Name	--1
+        	,Code	--2
+        	 ,	CityID	--3
+        	  ,	Address--4
+        	   from dbo.Stations"""
+
+        cursor = cnxn.cursor()
+        cursor.execute(sql_get_station)
+        rows = cursor.fetchall()
+        list = []
+        for row in rows:
+            # list.append((row[1], row[1]))  # Name
+
+
+
+            station_exists = self.env['station_operation.station'].sudo().search([
+                ('bs_id', '=', row[0]),
+                #('AmPm', '=', "AM"),
+            ], limit=1)
+
+            if (len(station_exists) > 0):
+                continue
+            vals_station = {
+                'id': row[0],
+                'bs_id': row[0],
+                'name': row[1],
+                'station_code': row[2],
+                # 'city_id': row[3],
+                'address': row[4],
+            }
+            self.env['station_operation.station'].create(vals_station)
+        return list
 
     def test_sql3(self):
         sql = """
@@ -196,7 +263,11 @@ class station_day_end_close(models.Model):
                 'line_amount': row[4] * row[3]  # row.Volume * row.unitPrice
             }
             self.env['station_operation.station_day_end_close_sale_line'].create(vals)
-            print("done : ")
+            # print("done : ")
+            self.state = 'sales_calculated'
+
+    def close_day(self):
+        self.state = 'closed'
 
     def create_sales(self):
         # product91 = self.env['product.product'].search([('name', '=', '91')])[0]
@@ -225,6 +296,7 @@ class station_day_end_close(models.Model):
             'parent_dec_id': self.id
         }
         self.env['sale.order'].create(vals)
+        self.state = 'sales_order_created'
 
     def sendMail(self):
         public_users = self.env.ref('station_operation.station_operation_manager').users
@@ -289,6 +361,7 @@ class station_day_end_close(models.Model):
             'parent_dec_id': self.id,
         }
         self.env['purchase.order'].create(vals)
+        self.state = 'purchase_order_created'
 
         # if self.res_model and self.res_id:
         #     return self.env[self.res_model].browse(self.res_id).get_formview_action()
@@ -363,6 +436,8 @@ class station_day_end_close(models.Model):
                 rec_qty_evaporation = res_inserted_tank_lines.opening_qty + res_inserted_tank_lines.qty_in - res_inserted_tank_lines.tank_guns_total_sales - res_inserted_tank_lines.closing_qty
                 res_inserted_tank_lines.write({'qty_evaporation': rec_qty_evaporation})
 
+                self.state = 'tank_calculated'
+
 
 class station_day_end_close_sale_line(models.Model):
     _name = 'station_operation.station_day_end_close_sale_line'
@@ -423,6 +498,7 @@ class station_day_end_close_tank_line(models.Model):
     def _calc_product_icon(self):
         for rec in self:
             rec.product_icon = rec.product_id.station_operation_icon
+
     @api.depends("line_detail_ids")
     def _calc_reciving(self):
         for rec in self:
@@ -430,8 +506,6 @@ class station_day_end_close_tank_line(models.Model):
             for line in rec.line_detail_ids:
                 tot += line.totalIn
             rec.qty_in = tot
-
-
 
     # @api.depends("line_detail_ids", "opening_qty", "qty_in", "tank_guns_total_sales", "closing_qty")
     # def _calc_evaporation(self):

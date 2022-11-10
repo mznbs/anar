@@ -27,6 +27,8 @@
                     <field name="name"/>
                     <field name="station"/>
                     <field name="date_of_closing"/>
+                    <field name="station_id"/>
+
                 </tree>
             </field>
         </record>
@@ -37,22 +39,25 @@
             <field name="arch" type="xml">
                 <form string="day end closing">
                     <div class="oe_button_box" name="button_box">
+
+
                         <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
                                 name="calc_all_sales"/>
-                        <!--                     <button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
-                        <!--                                name="test_sql3"/>-->
+                             <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
+
+                        <!--<button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
+                        <!--name="test_sql3"/>-->
                         <button string="Create Sales" icon="fa-circle text-success" type="object" name="create_sales"/>
-                        <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
                         <button string="Create Purchase " icon="fa-file-text-o" type="object"
-                                name="create_purch"
-                        />
+                                name="create_purch"                        />
 
                         <!--    confirm = "This will assign leads to all members. Do you want to proceed?"-->
                         <!--  ⛽ 🫧🪫  🔋  -->
 
-
                         <button string="Send Mail" icon="fa-paper-plane" type="object"
                                 name="sendMail"/>
+                                                <button string=" Sync " icon="fa-file-text-o" type="object"
+                                name="get_stations"/>
                         <!--                        <button string="Send Mail" icon="fa-star" type="object"-->
                         <!--                                name="sendMail"/>-->
 
@@ -62,7 +67,11 @@
 
                     </div>
                     <group>
+                                                <field name="state" widget="statusbar"/>
+
+                                            <field name="station_id"/>
                         <field name="name"/>
+
                         <field name="station"/>
                         <field name="date_of_closing"/>
                     </group>
@@ -142,8 +151,8 @@
                             </group>
 
                             <group>
-                                <field name="purch_order_ids" >
-                                    <tree >
+                                <field name="purch_order_ids">
+                                    <tree>
                                         <field name="id"/>
                                         <field name="name"/>
                                         <field name="amount_total"/>
@@ -182,9 +191,7 @@
 
         <!-- Top menu item -->
         <menuitem name="Stations Operations" id="station_operation.menu_root"
-
-                  web_icon="station_operation,static\src\image\icon.png"
-        />
+                  web_icon="station_operation,static\src\image\icon.png"/>
         <!-- menu categories -->
         <menuitem name="Transactions" id="station_operation.trx" parent="station_operation.menu_root"/>
 

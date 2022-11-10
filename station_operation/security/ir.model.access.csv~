@@ -10,5 +10,3 @@ access_station_operation_sale_by_gun_line,station_operation.station_day_end_clos
 ,,,,,,,
 ,,,,,,,
 access_station_operation_station,station_operation.station_master,model_station_operation_station,base.group_user,1,1,1,1
-access_station_operation_tank,station_operation.tank_master,model_station_operation_tank,base.group_user,1,1,1,1
-access_station_operation_gun,station_operation.gun_master,model_station_operation_gun,base.group_user,1,1,1,1

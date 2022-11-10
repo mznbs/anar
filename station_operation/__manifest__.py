@@ -29,6 +29,7 @@
         'views/templates.xml',
         'views/views_product_inherit.xml',
         'views/views_tanks.xml',
+        'views/views_station_master_data.xml',
         'data/mail_template_data2.xml',
         'security/station_security.xml',
     ],

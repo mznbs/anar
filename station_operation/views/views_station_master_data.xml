@@ -1,0 +1,89 @@
+<odoo>
+    <data>
+
+
+        <!-- explicit list view definition -->
+        <record model="ir.ui.view" id="station_operation.master_stations_tree">
+            <field name="name">Station list</field>
+            <field name="model">station_operation.station</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="id"/>
+                    <field name="name"/>
+                                            <field name="station_code"/>
+                        <field name="bs_id"/>
+
+                    <field name="address"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.view" id="station_form">
+            <field name="name">station_operation.station</field>
+            <field name="model">station_operation.station</field>
+            <field name="arch" type="xml">
+                <form string="Stations">
+                    <group>
+                        <field name="id"/>
+                        <field name="name"/>
+                        <field name="station_code"/>
+                        <field name="bs_id"/>
+                        <field name="description"/>
+                        <field name="start_date"/>
+                        <field name="address"/>
+                        <field name="latest_closing_date"/>
+                    </group>
+                    <notebook>
+                        <page string="Sales Transactions">
+                            <group>
+                                <field name="tank_ids">
+                                    <tree editable="bottom" string="Tanks" multi_edit="1" sample="1"
+                                          expand="1" default_order="product_id asc"
+                                          class="o_event_registration_view_tree">
+                                        <field name="id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_icon"/>
+                                        <field name="start_date"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+
+                        <page string="Guns">
+                            <group>
+                                <field name="gun_ids">
+                                    <tree editable="bottom" string="Tanks" multi_edit="1" sample="1"
+                                          expand="1" default_order="product_id asc"
+                                          class="o_event_registration_view_tree">
+                                        <field name="id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_icon"/>
+                                        <field name="tank_id"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+
+                    </notebook>
+                </form>
+            </field>
+        </record>
+
+
+        <!-- actions opening views on models -->
+        <record model="ir.actions.act_window" id="station_operation.station_action_window">
+            <field name="name">Stations</field>
+            <field name="res_model">station_operation.station</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+
+        <!-- menu categories -->
+        <menuitem name="Configration" id="station_operation.conf" parent="station_operation.menu_root"/>
+
+        <menuitem name="Stations" id="station_operation.station_menu" parent="station_operation.conf"
+                  action="station_operation.station_action_window"/>
+
+    </data>
+</odoo>
