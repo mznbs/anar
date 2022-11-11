@@ -10,9 +10,8 @@
                 <tree>
                     <field name="id"/>
                     <field name="name"/>
-                                            <field name="station_code"/>
-                        <field name="bs_id"/>
-
+                    <field name="station_code"/>
+                    <field name="bs_id"/>
                     <field name="address"/>
                 </tree>
             </field>
@@ -24,48 +23,58 @@
             <field name="model">station_operation.station</field>
             <field name="arch" type="xml">
                 <form string="Stations">
-                    <group>
-                        <field name="id"/>
-                        <field name="name"/>
-                        <field name="station_code"/>
-                        <field name="bs_id"/>
-                        <field name="description"/>
-                        <field name="start_date"/>
-                        <field name="address"/>
-                        <field name="latest_closing_date"/>
-                    </group>
-                    <notebook>
-                        <page string="Sales Transactions">
+                    <sheet>
+                        <group>
                             <group>
-                                <field name="tank_ids">
-                                    <tree editable="bottom" string="Tanks" multi_edit="1" sample="1"
-                                          expand="1" default_order="product_id asc"
-                                          class="o_event_registration_view_tree">
-                                        <field name="id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_icon"/>
-                                        <field name="start_date"/>
-                                    </tree>
-                                </field>
+                                <field name="id"/>
+                                <field name="name"/>
+                                <field name="station_code"/>
+                                <field name="bs_id"/>
                             </group>
-                        </page>
-
-                        <page string="Guns">
                             <group>
-                                <field name="gun_ids">
-                                    <tree editable="bottom" string="Tanks" multi_edit="1" sample="1"
-                                          expand="1" default_order="product_id asc"
-                                          class="o_event_registration_view_tree">
-                                        <field name="id"/>
-                                        <field name="product_id"/>
-                                        <field name="product_icon"/>
-                                        <field name="tank_id"/>
-                                    </tree>
-                                </field>
+                                <field name="description"/>
+                                <field name="start_date"/>
+                                <field name="address"/>
+                                <field name="latest_closing_date"/>
                             </group>
-                        </page>
+                        </group>
+                        <notebook>
+                            <page string="Tanks 🛢️ ">
+                                <group>
+                                    <field name="tank_ids">
+                                        <tree editable="bottom" multi_edit="1" sample="1"
+                                              expand="1" default_order="product_id asc"
+                                              class="o_event_registration_view_tree">
+                                            <field name="id"/>
+                                            <field name="product_id"/>
+                                            <field name="product_icon"/>
+                                            <field name="tank_code"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
 
-                    </notebook>
+
+                            <page string="Guns ⛽">
+                                <sheet>
+                                    <group>
+                                        <field name="gun_ids">
+                                            <tree editable="bottom" multi_edit="1" default_order="product_id asc"
+                                                  class="o_event_registration_view_tree">
+                                                <field name="gun_code"/>
+                                                <field name="tank_code"/>
+                                                <field name="product_id"/>
+                                                <field name="product_icon"/>
+                                                <field name="tank_id"/>
+
+                                            </tree>
+                                        </field>
+                                    </group>
+                                </sheet>
+                            </page>
+
+                        </notebook>
+                    </sheet>
                 </form>
             </field>
         </record>

@@ -57,7 +57,7 @@ class station_opertation_template_product(models.Model):
 
     evap_loss_accepted_sales = fields.Float(string='Accepted Evaporation Loss% ⛽', digits=(16, 4), default=0.002)
     evap_loss_accepted_receivings = fields.Float(string='Accepted Evaporation Loss% ⛽', digits=(16, 4), default=0.002)
-    station_operation_icon = fields.Char(string="Product Icon", default="")
+    station_operation_icon = fields.Char(string="", default="")
 
 
 class station_day_end_close(models.Model):
@@ -77,11 +77,10 @@ class station_day_end_close(models.Model):
     description = fields.Text()
 
     station_id = fields.Many2one('station_operation.station', string='Station', )
-    station = fields.Selection(_get_stations, string='Station', required=True)
-    @api.onchange('station_id')
-    def _onchange_timezone(self):
-       # if self.station and not self.station_id:
-            self.station = self.station_id.name
+    # station = fields.Selection(_get_stations, string='Station', required=True)
+    # @api.onchange('station_id')
+    # def _onchange_timezone(self):
+    #         self.station = self.station_id.name
 
     date_of_closing = fields.Date('Date', required=True)
     company_id = fields.Many2one('res.company', string='Company', index=True, default=lambda self: self.env.company)
@@ -115,6 +114,67 @@ class station_day_end_close(models.Model):
     #     #self.calc_sales_qty()
     #     self.calc_all_sales()
 
+    def get_list_of_tanks_by_station(self, stationid):
+        tank_lines = []
+        sql_get_tanks = """
+                        SELECT TankStatus.ID AS tank_code,TankStatus.OilCode, GradeSpecifics.GradeSpecificID, GradeSpecifics.Name
+                        FROM     TankStatus INNER JOIN
+                                          GradeSpecifics ON GradeSpecifics.Code = TankStatus.OilCode
+                        WHERE  (TankStatus.StationID = %s) """
+        cursor_tanks = cnxn.cursor()
+        sql = sql_get_tanks % (stationid)
+        cursor_tanks.execute(sql)
+        rows = cursor_tanks.fetchall()
+        for row_tank in rows:
+
+            tank_code = row_tank[0]
+
+            guns = []
+            sql_get_guns = """ SELECT GUNCODE, PORTCODE
+FROM     GunConfig_station
+where TANKCODE= %s   """
+            cursor_guns = cnxn.cursor()
+            sqlgun = sql_get_guns % (tank_code)
+            cursor_guns.execute(sqlgun)
+            rows_guns = cursor_guns.fetchall()
+
+            for row_gun in rows_guns:
+                guns.append((0, 0, {
+                    'gun_code': row_gun[0],
+                    # 'station_id': self,
+                    'port_code': row_gun[1],
+                    # 'tank_id': row_tank[2],
+                    'tank_code': tank_code,
+                    'product_id': self.env['product.product'].search([('name', '=', row_tank[3])])[0].id,
+                }))
+
+            tank_lines.append((0, 0, {
+                'tank_code': row_tank[0],
+                'station_id': self,
+                'oil_code': row_tank[1],
+                'grade_specific_id': row_tank[2],
+                'gun_ids': guns,
+                'product_id': self.env['product.product'].search([('name', '=', row_tank[3])])[0].id,
+            }))
+        return tank_lines
+
+    def update_guns_null_station_id(self, id):
+        gun_need_updates_list = self.env['station_operation.gun'].sudo().search([('station_id', '=', False)], limit=100)
+
+        for row in gun_need_updates_list:
+            tank = self.env['station_operation.tank'].sudo().search([
+                ('tank_code', '=', row.tank_code),
+            ], limit=1)[0]
+            #
+            # #row.station_id = 42
+            # station_exists = self.env['station_operation.station'].sudo().search([
+            #     ('bs_id', '=', tank.station_id),
+            #     # ('AmPm', '=', "AM"),
+            # ], limit=1)
+            row.write({'station_id': id})
+
+            row.write({'tank_id': tank.id})
+
     def get_stations(self):
         sql_get_station = """select StationID,--0
         	Name	--1
@@ -126,19 +186,17 @@ class station_day_end_close(models.Model):
         cursor = cnxn.cursor()
         cursor.execute(sql_get_station)
         rows = cursor.fetchall()
-        list = []
         for row in rows:
-            # list.append((row[1], row[1]))  # Name
-
-
-
             station_exists = self.env['station_operation.station'].sudo().search([
                 ('bs_id', '=', row[0]),
-                #('AmPm', '=', "AM"),
+                # ('AmPm', '=', "AM"),
             ], limit=1)
 
             if (len(station_exists) > 0):
                 continue
+
+            tank_lines = self.get_list_of_tanks_by_station(row[0])
+
             vals_station = {
                 'id': row[0],
                 'bs_id': row[0],
@@ -146,8 +204,11 @@ class station_day_end_close(models.Model):
                 'station_code': row[2],
                 # 'city_id': row[3],
                 'address': row[4],
+                'tank_ids': tank_lines
             }
-            self.env['station_operation.station'].create(vals_station)
+            res = self.env['station_operation.station'].create(vals_station)
+        self.update_guns_null_station_id(res.id)
+
         return list
 
     def test_sql3(self):
@@ -205,7 +266,7 @@ class station_day_end_close(models.Model):
         )
         cursor.execute(sql)
         rows = cursor.fetchall()
-        print("read : " + str(len(rows)))
+        # print("read : " + str(len(rows)))
 
         for row in rows:
             # create lines
@@ -218,6 +279,8 @@ class station_day_end_close(models.Model):
                 'unit_price': row[3],  # unitPrice
                 'opening_reading': row[9],  # opening_reading
                 'closing_reading': row[10],  # closing_reading
+                'tank_id': self.env['station_operation.tank'].search([('tank_code', '=', row[11])])[0].id,
+                'gun_id': self.env['station_operation.gun'].search([('gun_code', '=', row[8])])[0].id,
                 'tank_code': row[11],  # TANKCODE
                 'line_amount': row[4] * row[3]  # row.Volume * row.unitPrice
             }
@@ -386,9 +449,9 @@ class station_day_end_close(models.Model):
           [dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty,--3
           [dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty--4
         FROM     View_Tank_master
-        where StationName='%s'
+        where StationID='%s'
         """
-        sql_statment = sql_get_tank_measures2 % (day, mth, year, day, mth, year, self.station)
+        sql_statment = sql_get_tank_measures2 % (day, mth, year, day, mth, year, self.station_id.bs_id)
         cursor_tanks.execute(sql_statment)
         tanks = cursor_tanks.fetchall()
         for tank in tanks:
@@ -400,6 +463,7 @@ class station_day_end_close(models.Model):
 
                 vals = {
                     'tank': tank[0],  # TankCode
+                    'tank_id': self.env['station_operation.tank'].search([('tank_code', '=', tank[0])])[0].id,
                     'opening_qty': tank[3],  # opening_qty
                     'closing_qty': tank[4],  # closing_qty
                     # 'qty_in':  calculated,
@@ -477,20 +541,21 @@ class station_day_end_close_tank_line(models.Model):
 
     name = fields.Char(string="Name")
     parent_id = fields.Many2one('station_operation.station_day_end_close')
-    tank = fields.Char(string="Tank")
+    tank = fields.Char(string="Tank x not used")
     opening_qty = fields.Float(default=0.0, string='Opening Qty')
     closing_qty = fields.Float(default=0.0, string='Closing Qty')
-    tank_guns_total_sales = fields.Float(default=0.0, string='Tank Sales Qty')
-    qty_in = fields.Float(default=0.0, help="qty_in", compute='_calc_reciving', string='qty Receiving')
+    tank_guns_total_sales = fields.Float(default=0.0, string='Tank Sales Qty 📤')
+    qty_in = fields.Float(default=0.0, help="qty_in", compute='_calc_reciving', string='Receiving Qty 🚛')
 
-    qty_evaporation = fields.Float(default=0.0, string='Evaporation')
+    qty_evaporation = fields.Float(default=0.0, string='Evaporation ♨️')
     # qty_evaporation_calculated = fields.Float(default=0.0, compute='_calc_evaporation', string='Evaporation Calculated')
     qty_evaporation_allowed = fields.Float(default=0.0, compute='_calc_evaporation_allowed',
                                            string='Evaporation Allowed')
 
     line_detail_ids = fields.One2many('station_operation.station.dec.tank.line.details',
-                                      'parent_tank_line_id')
+                                      'parent_tank_line_id', string="Receivings")
 
+    tank_id = fields.Many2one('station_operation.tank')
     product_id = fields.Many2one('product.product')
     product_icon = fields.Char(compute='_calc_product_icon', string='')
 
@@ -546,6 +611,7 @@ class station_day_end_close_sale_by_gun_line(models.Model):
     _inherit = "station_operation.station_day_end_close_sale_line"
 
     tank_code = fields.Char(string="Tank Code")
+
     gun = fields.Char(string="gun")
     opening_reading = fields.Float(default=0.0, help="Opening Reading", string='Opening Reading')
     closing_reading = fields.Float(default=0.0, help="Closing Reading", string='Closing Reading')
@@ -553,6 +619,9 @@ class station_day_end_close_sale_by_gun_line(models.Model):
                                 compute='_compute_diff')
     reading_vs_qty = fields.Float(default=0.0, help="Reading vs Quantity", string='Reading vs Quantity',
                                   compute='_compute_reading_vs_qty')
+
+    tank_id = fields.Many2one('station_operation.tank')
+    gun_id = fields.Many2one('station_operation.gun')
 
     def _compute_diff(self):
         for row in self:

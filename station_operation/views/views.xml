@@ -8,9 +8,9 @@
                     <field name="name"/>
                     <field name="date_of_closing"/>
                     <separator/>
-                    <filter string="Saud 1" name="inactive" domain="[('station', 'ilike', 'Saud 1')]"/>
+                    <filter string="Saud 1" name="inactive" domain="[('station_id', 'ilike', 'Saud 1')]"/>
                     <group expand="0" string="Group By">
-                        <filter string="Date Of Day End" name="date_of_closing" domain="[('station', '=', '1')]"
+                        <filter string="Date Of Day End" name="date_of_closing" domain="[('station_id', '=', '1')]"
                                 context="{'group_by':'date_of_closing'}"/>
                     </group>
                 </search>
@@ -25,7 +25,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
-                    <field name="station"/>
+                    <!--                    <field name="station"/>-->
                     <field name="date_of_closing"/>
                     <field name="station_id"/>
 
@@ -43,20 +43,20 @@
 
                         <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
                                 name="calc_all_sales"/>
-                             <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
+                        <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
 
                         <!--<button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
                         <!--name="test_sql3"/>-->
                         <button string="Create Sales" icon="fa-circle text-success" type="object" name="create_sales"/>
                         <button string="Create Purchase " icon="fa-file-text-o" type="object"
-                                name="create_purch"                        />
+                                name="create_purch"/>
 
                         <!--    confirm = "This will assign leads to all members. Do you want to proceed?"-->
                         <!--  ⛽ 🫧🪫  🔋  -->
 
                         <button string="Send Mail" icon="fa-paper-plane" type="object"
                                 name="sendMail"/>
-                                                <button string=" Sync " icon="fa-file-text-o" type="object"
+                        <button string=" Sync " icon="fa-file-text-o" type="object"
                                 name="get_stations"/>
                         <!--                        <button string="Send Mail" icon="fa-star" type="object"-->
                         <!--                                name="sendMail"/>-->
@@ -67,12 +67,10 @@
 
                     </div>
                     <group>
-                                                <field name="state" widget="statusbar"/>
-
-                                            <field name="station_id"/>
+                        <field name="state" widget="statusbar"/>
+                        <field name="station_id"/>
                         <field name="name"/>
-
-                        <field name="station"/>
+                        <!-- <field name="station"/>-->
                         <field name="date_of_closing"/>
                     </group>
                     <notebook>
@@ -99,6 +97,9 @@
                             <group>
                                 <field name="station_day_end_close_lines_sale_by_gun_ids">
                                     <tree editable="bottom">
+
+                                        <field name="tank_id"/>
+                                        <field name="gun_id"/>
                                         <field name="product_id"/>
                                         <field name="product_icon"/>
                                         <field name="qty"/>
@@ -106,13 +107,13 @@
                                         <field name="unit_price"/>
                                         <field name="line_amount"/>
                                         <field name="type"/>
-                                        <field name="gun"/>
+<!--                                        <field name="gun"/>-->
 
                                         <field name="opening_reading"/>
                                         <field name="closing_reading"/>
                                         <field name="reading_diff"/>
                                         <field name="reading_vs_qty"/>
-                                        <field name="tank_code"/>
+
                                     </tree>
                                 </field>
                             </group>
@@ -122,14 +123,18 @@
                                 <field name="station_day_end_close_tank_line_ids">
                                     <tree decoration-warning="not (qty_evaporation &gt; qty_evaporation_allowed)"
                                           decoration-danger="(qty_evaporation &gt; qty_evaporation_allowed)">
-                                        <field name="tank"/>
-                                        <field name="product_id"/>
+
+                                        <field name="tank_id"/>
+                                        <!--                                        <field name="product_id"/>-->
                                         <field name="product_icon"/>
-                                        <field name="qty_in"/>
                                         <field name="opening_qty"/>
-                                        <field name="closing_qty"/>
+
+                                        <field name="qty_in"/>
+
                                         <field name="tank_guns_total_sales"/>
                                         <field name="qty_evaporation"/>
+
+                                        <field name="closing_qty"/>
                                         <field name="qty_evaporation_allowed"/>
                                         <field name="line_detail_ids" widget="many2many_tags"/>
                                     </tree>
