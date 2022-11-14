@@ -55,8 +55,9 @@ def _get_stations(self):
 class station_opertation_template_product(models.Model):
     _inherit = "product.template"
 
-    evap_loss_accepted_sales = fields.Float(string='Accepted Evaporation Loss% ⛽', digits=(16, 4), default=0.002)
-    evap_loss_accepted_receivings = fields.Float(string='Accepted Evaporation Loss% ⛽', digits=(16, 4), default=0.002)
+    evap_loss_accepted_sales = fields.Float(string='Accepted Evaporation Loss% Sales ⛽', digits=(16, 4), default=0.002)
+    evap_loss_accepted_receivings = fields.Float(string='Accepted Evaporation Loss% Receiving 🚛', digits=(16, 4),
+                                                 default=0.002)
     station_operation_icon = fields.Char(string="", default="")
 
 
@@ -97,6 +98,9 @@ class station_day_end_close(models.Model):
     sales_order_ids = fields.One2many('sale.order',
                                       'parent_dec_id')
     purch_order_ids = fields.One2many('purchase.order',
+                                      'parent_dec_id')
+
+    inventory_adjustment_ids = fields.One2many('stock.quant',
                                       'parent_dec_id')
 
     station_day_end_close_lines_sale_ids = fields.One2many('station_operation.station_day_end_close_sale_line',
@@ -400,6 +404,19 @@ where TANKCODE= %s   """
 
     # _logger.info("Password reset email sent for user <%s> to <%s>", user.login, user.email)
 
+    def create_inv_adjustment(self):
+
+        for l in self.station_day_end_close_tank_line_ids:
+            # 'product_id': self.env['product.product'].search([('name', '=', tank[1])])[0].id,
+            location_id = self.env['stock.location'].sudo().search([('name', '=', 'Stock')], limit=1)[0].id
+            self.env['stock.quant'].create({
+                'location_id': location_id,
+                'product_id': l.product_id.id,  # .id,
+                'inventory_quantity': l.closing_qty,
+                'inventory_date': self.date_of_closing,
+                # 'lot_id': Lot.create({'name': 'L1', 'product_id': consumed_lot.id, 'company_id': self.env.company.id}).id
+            })
+
     def create_purch(self):
         vend_Aramco = self.env['res.partner'].search([('name', 'ilike', 'aramco')])[0]
 
@@ -443,14 +460,14 @@ where TANKCODE= %s   """
         cursor_tanks = cnxn.cursor()
 
         sql_get_tank_measures2 = """
-        SELECT TankCode,--0
-         item,--1
-          StationID,--2
-          [dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty,--3
-          [dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty--4
-        FROM     View_Tank_master
-        where StationID='%s'
-        """
+            SELECT TankCode,--0
+             item,--1
+              StationID,--2
+              [dbo].[fn_get_tank_opening](TankCode , %s ,%s,%s ) as opening_qty,--3
+              [dbo].[fn_get_tank_closing](TankCode , %s,%s,%s ) as closing_qty--4
+            FROM     View_Tank_master
+            where StationID='%s'
+            """
         sql_statment = sql_get_tank_measures2 % (day, mth, year, day, mth, year, self.station_id.bs_id)
         cursor_tanks.execute(sql_statment)
         tanks = cursor_tanks.fetchall()
@@ -580,9 +597,12 @@ class station_day_end_close_tank_line(models.Model):
     @api.depends("product_id", "opening_qty", "qty_in", "tank_guns_total_sales", "closing_qty")
     def _calc_evaporation_allowed(self):
         for rec in self:
+            receiving = rec.product_id.evap_loss_accepted_receivings
+            if receiving == 0:
+                receiving = rec.product_id.evap_loss_accepted_sales
             rec.qty_evaporation_allowed = \
                 rec.product_id.evap_loss_accepted_sales * rec.tank_guns_total_sales + \
-                rec.product_id.evap_loss_accepted_receivings * rec.qty_in
+                receiving * rec.qty_in
             # self.env['product.product'].search([('name', '=', rec.product_id)])[0].id,
 
 

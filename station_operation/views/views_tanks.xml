@@ -3,7 +3,7 @@
 
         <!-- tank line details recivings -->
         <record model="ir.ui.view" id="station_operation.list">
-            <field name="name">dec tank line details recivings</field>
+            <field name="name">dec tank details receiving</field>
             <field name="model">station_operation.station.dec.tank.line.details</field>
             <field name="arch" type="xml">
                 <tree>

@@ -8,6 +8,17 @@ class SalesOrderStation(models.Model):
 
     parent_dec_id = fields.Many2one('station_operation.station_day_end_close')
 
+
+
+
+class SalesOrderStation(models.Model):
+    _inherit = 'stock.quant'
+
+    is_station_invent_adjustment = fields.Boolean(default=False)
+
+    parent_dec_id = fields.Many2one('station_operation.station_day_end_close')
+
+
 class PurchOrderStation(models.Model):
     _inherit = 'purchase.order'
 
