@@ -17,17 +17,17 @@
             </field>
         </record>
 
-
         <!-- explicit list view definition -->
         <record model="ir.ui.view" id="station_operation.station_day_end_close_tree">
             <field name="name">station_operation list</field>
             <field name="model">station_operation.station_day_end_close</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="name"/>
+                    <field name="common_name"/>
                     <field name="date_of_closing"/>
                     <field name="station_id"/>
-
+                    <field name="state"/>
+                    <field name="total_sales" sum="Total"/>
                 </tree>
             </field>
         </record>
@@ -37,141 +37,136 @@
             <field name="model">station_operation.station_day_end_close</field>
             <field name="arch" type="xml">
                 <form string="day end closing">
-                    <div class="oe_button_box" name="button_box">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+
+                            <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
+                                    name="calc_all_sales"/>
+                            <button string="Tank Calculations " icon="fa-arrow-down" type="object"
+                                    name="prepare_tanks"/>
+
+                            <!--<button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
+                            <!--name="test_sql3"/>-->
+                            <button string="Create Sales" icon="fa-external-link" type="object" name="create_sales"/>
+                            <button string="Purchase" icon="fa-truck" type="object"
+                                    name="create_purch"/>
+                            <button string="Create Evaporation Loss Adjustment" icon="fa-file-text-o" type="object"
+                                    name="create_inv_adjustment"/>
+                            <!--    confirm = "This will assign leads to all members. Do you want to proceed?"-->
+                            <!--  ⛽ 🫧🪫  🔋  -->
+                            <button string="Send Mail" icon="fa-paper-plane" type="object"
+                                    name="sendMail"/>
+                            <button string=" Sync " icon="fa-circle text-success" type="object"
+                                    name="get_stations"/>
+                            <button string=" Sync " icon="fa-file-text-o" type="object"
+                                    name="close_day"/>
+
+                            <!--           fa-file-text-o             <button string="Send Mail" icon="fa-star" type="object"-->
+                            <!--                                name="sendMail"/>-->
+
+                            <!--                        <button string="Send Mail" icon="fa-files-o" type="object"-->
+                            <!--                                name="sendMail"/>-->
 
 
-                        <button string=" Calculate Sales" type="object" icon="fa-refresh text-primary"
-                                name="calc_all_sales"/>
-                        <button string="Tank Calculations " icon="fa-arrow-down" type="object" name="prepare_tanks"/>
+                        </div>
+                        <group>
+                            <field name="state" widget="statusbar"/>
+                            <field name="station_id"/>
+                            <field name="name"/>
+                            <!-- <field name="station"/>-->
+                            <field name="date_of_closing"/>
+                        </group>
+                        <notebook>
+                            <page string="Sales Transactions">
+                                <field name="station_day_end_close_lines_sale_ids">
 
-                        <!--<button string="  test pymssql" type="object" icon="fa-refresh text-primary"-->
-                        <!--name="test_sql3"/>-->
-                        <button string="Create Sales" icon="fa-external-link" type="object" name="create_sales"/>
-                        <button string="Purchase" icon="fa-truck" type="object"
-                                name="create_purch"/>
-                        <button string="Create Evaporation Loss Adjustment" icon="fa-file-text-o" type="object"
-                                name="create_inv_adjustment"/>
-                        <!--    confirm = "This will assign leads to all members. Do you want to proceed?"-->
-                        <!--  ⛽ 🫧🪫  🔋  -->
-                        <button string="Send Mail" icon="fa-paper-plane" type="object"
-                                name="sendMail"/>
-                        <button string=" Sync " icon="fa-circle text-success" type="object"
-                                name="get_stations"/>
-                        <button string=" Sync " icon="fa-file-text-o" type="object"
-                                name="close_day"/>
-
-                        <!--           fa-file-text-o             <button string="Send Mail" icon="fa-star" type="object"-->
-                        <!--                                name="sendMail"/>-->
-
-                        <!--                        <button string="Send Mail" icon="fa-files-o" type="object"-->
-                        <!--                                name="sendMail"/>-->
-
-
-                    </div>
-                    <group>
-                        <field name="state" widget="statusbar"/>
-                        <field name="station_id"/>
-                        <field name="name"/>
-                        <!-- <field name="station"/>-->
-                        <field name="date_of_closing"/>
-                    </group>
-                    <notebook>
-                        <page string="Sales Transactions">
-                            <field name="station_day_end_close_lines_sale_ids">
-
-                                <tree editable="bottom" string="Registration" multi_edit="1" sample="1"
-                                      expand="1" default_order="product_id asc"
-                                      class="o_event_registration_view_tree">
-                                    <field name="product_id"/>
-                                    <field name="product_icon"/>
-
-                                    <field name="qty"/>
-                                    <!--   <field name="forman_qty"/>-->
-                                    <field name="unit_price"/>
-                                    <field name="line_amount"/>
-                                    <field name="type"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="Sales Transactions by gun">
-                            <field name="station_day_end_close_lines_sale_by_gun_ids">
-                                <tree editable="bottom">
-
-                                    <field name="tank_id"/>
-                                    <field name="gun_id"/>
-                                    <field name="product_id"/>
-                                    <field name="product_icon"/>
-                                    <field name="qty"/>
-                                    <!--<field name="forman_qty"/>-->
-                                    <field name="unit_price"/>
-                                    <field name="line_amount"/>
-                                    <field name="type"/>
-                                    <!--                                        <field name="gun"/>-->
-
-                                    <field name="opening_reading"/>
-                                    <field name="closing_reading"/>
-                                    <field name="reading_diff"/>
-                                    <field name="reading_vs_qty"/>
-
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="Tanks Transactions">
-                            <field name="station_day_end_close_tank_line_ids">
-                                <tree decoration-warning="not (qty_evaporation &gt; qty_evaporation_allowed)"
-                                      decoration-danger="(qty_evaporation &gt; qty_evaporation_allowed)">
-
-                                    <field name="tank_id"/>
-                                    <!--                                        <field name="product_id"/>-->
-                                    <field name="product_icon"/>
-                                    <field name="opening_qty"/>
-
-                                    <field name="qty_in"/>
-
-                                    <field name="tank_guns_total_sales"/>
-                                    <field name="qty_evaporation"/>
-
-                                    <field name="closing_qty"/>
-                                    <field name="qty_evaporation_allowed"/>
-                                    <field name="line_detail_ids" widget="many2many_tags"/>
-                                </tree>
-                            </field>
-                        </page>
+                                    <tree editable="bottom" string="Registration" multi_edit="1" sample="1"
+                                          expand="1" default_order="product_id asc"
+                                          class="o_event_registration_view_tree">
+                                        <field name="product_id"/>
+                                        <field name="product_icon"/>
+                                        <field name="qty" sum="QTY"/>
+                                        <!--   <field name="forman_qty"/>-->
+                                        <field name="unit_price"/>
+                                        <field name="line_amount" sum="Amount"/>
+                                        <field name="type"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Sales Transactions by gun">
+                                <field name="station_day_end_close_lines_sale_by_gun_ids">
+                                    <tree editable="bottom">
+                                        <field name="tank_id"/>
+                                        <field name="gun_id"/>
+                                        <field name="product_id"/>
+                                        <field name="product_icon"/>
+                                        <field name="qty" sum="QTY"/>
+                                        <!--<field name="forman_qty"/>-->
+                                        <field name="unit_price"/>
+                                        <field name="line_amount" sum="Amount"/>
+                                        <field name="type"/>
+                                        <!-- <field name="gun"/>-->
+                                        <field name="opening_reading"/>
+                                        <field name="closing_reading"/>
+                                        <field name="reading_diff"/>
+                                        <field name="reading_vs_qty"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Tanks Transactions">
+                                <field name="station_day_end_close_tank_line_ids">
+                                    <tree decoration-warning="not (qty_evaporation &gt; qty_evaporation_allowed)"
+                                          decoration-danger="(qty_evaporation &gt; qty_evaporation_allowed)">
+                                        <field name="tank_id"/>
+                                        <!--<field name="product_id"/>-->
+                                        <field name="product_icon"/>
+                                        <field name="opening_qty"/>
+                                        <field name="qty_in" sum="Total Receiving"/>
+                                        <field name="tank_guns_total_sales" sum="Sales"/>
+                                        <field name="qty_evaporation"/>
+                                        <field name="closing_qty"/>
+                                        <field name="qty_evaporation_allowed"/>
+                                        <field name="line_detail_ids" widget="many2many_tags"/>
+                                        <field name="count_log"/>
+                                    </tree>
+                                </field>
+                            </page>
 
 
-                        <page string="Sales Orders">
-                            <field name="sales_order_ids" create="False" delete="True" editable="False">
-                                <tree create="False" delete="True" editable="False">
-                                    <field name="id"/>
-                                    <field name="name"/>
-                                    <field name="amount_total"/>
-                                    <!--      <field name="sale_order_line_ids"/>-->
-                                </tree>
-                            </field>
+                            <page string="Sales Orders">
+                                <field name="sales_order_ids" create="False" delete="True" editable="False">
+                                    <tree create="False" delete="True" editable="False">
+                                        <field name="id"/>
+                                        <field name="name"/>
+                                        <field name="amount_total"/>
+                                        <!--      <field name="sale_order_line_ids"/>-->
+                                    </tree>
+                                </field>
 
-                        </page>
-                        <page string="Purchase Orders">
-                            <field name="purch_order_ids">
-                                <tree>
-                                    <field name="id"/>
-                                    <field name="name"/>
-                                    <field name="amount_total"/>
-                                </tree>
-                            </field>
-                        </page>
-                        <page string="Inventory Adjustment (Evaporation)">
-<!--                            <field name="purch_order_ids">-->
-<!--                                <tree>-->
-<!--                                    <field name="id"/>-->
-<!--                                    <field name="name"/>-->
-<!--                                    <field name="amount_total"/>-->
-<!--                                </tree>-->
-<!--                            </field>-->
-                        </page>
+                            </page>
+                            <page string="Purchase Orders">
+                                <field name="purch_order_ids">
+                                    <tree>
+                                        <field name="id"/>
+                                        <field name="name"/>
+                                        <field name="amount_total" sum="Total Amount"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Inventory Adjustment (Evaporation)">
+                                <!--                            <field name="purch_order_ids">-->
+                                <!--                                <tree>-->
+                                <!--                                    <field name="id"/>-->
+                                <!--                                    <field name="name"/>-->
+                                <!--                                    <field name="amount_total"/>-->
+                                <!--                                </tree>-->
+                                <!--                            </field>-->
+                            </page>
 
 
+                        </notebook>
 
-                    </notebook>
+                    </sheet>
                 </form>
             </field>
         </record>
@@ -181,9 +176,35 @@
         <record model="ir.actions.act_window" id="station_operation.action_window_dec">
             <field name="name">Day End Closings</field>
             <field name="res_model">station_operation.station_day_end_close</field>
-            <field name="view_mode">tree,form</field>
+            <!--<field name="view_mode">tree,form</field>-->
+            <field name="view_mode">tree,kanban,form,calendar,pivot,graph,activity</field>
             <field name="search_view_id" ref="station_closing_view_search"/>
         </record>
+
+        <record id="view_station_operation_pivot" model="ir.ui.view">
+            <field name="name">station_operation.station_day_end_close.pivot</field>
+            <field name="model">station_operation.station_day_end_close</field>
+            <field name="arch" type="xml">
+                <pivot string="Invoices Analysis" sample="1">
+                    <field name="name" type="col"/>
+                    <field name="date_of_closing" type="row"/>
+                    <field name="total_sales" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!--calender support-->
+        <record id="view_invoice_line_calendar" model="ir.ui.view">
+            <field name="name">station_operation.station_day_end_close.calendar</field>
+            <field name="model">station_operation.station_day_end_close</field>
+            <field name="arch" type="xml">
+                <calendar string="Invoices" date_start="date_of_closing">
+                    <field name="name"/>
+                    <field name="date_of_closing"/>
+                </calendar>
+            </field>
+        </record>
+
 
         <!-- server action to the one above -->
         <record model="ir.actions.server" id="station_operation.action_server">

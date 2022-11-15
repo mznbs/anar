@@ -37,17 +37,6 @@ def _get_stations(self):
     for row in rows:
         list.append((row[1], row[1]))  # Name
 
-        # station_count = self.env['station_operation.station'].search_count([('id', '=', row[0])]),  # row.Name
-        # if station_count == 0:  # create station
-        #     vals_station = {
-        #         'id': row[0],
-        #         'name': row[1],
-        #         'station_code': row[2],
-        #         # 'city_id': row[3],
-        #         'address': row[4],
-        #     }
-        #     self.env['station_operation.station'].create(vals_station)
-        #     print("done : ")
     return list
 
 
@@ -64,6 +53,18 @@ class station_opertation_template_product(models.Model):
 class station_day_end_close(models.Model):
     _name = 'station_operation.station_day_end_close'
     _description = 'Station Day End Closing Header'
+    _rec_name = 'common_name'
+
+    common_name = fields.Char('Tank Name', compute='_calc_name', compute_sudo=True)
+
+    @api.depends("date_of_closing", "station_id")
+    def _calc_name(self):
+        for rec in self:
+            rec.common_name = " - "
+            if rec.station_id:
+                rec.common_name = rec.station_id.name
+            if rec.date_of_closing:
+                rec.common_name = rec.common_name + " - " + str(rec.date_of_closing)
 
     state = fields.Selection([('new', 'New'),
                               ('sales_calculated', 'Sales Calculated'),
@@ -101,13 +102,20 @@ class station_day_end_close(models.Model):
                                       'parent_dec_id')
 
     inventory_adjustment_ids = fields.One2many('stock.quant',
-                                      'parent_dec_id')
+                                               'parent_dec_id')
 
     station_day_end_close_lines_sale_ids = fields.One2many('station_operation.station_day_end_close_sale_line',
                                                            'parent_id')
     station_day_end_close_lines_sale_by_gun_ids = fields.One2many(
         'station_operation.station_day_end_close_sale_by_gun_line',
         'parent_id')
+
+    total_sales = fields.Float(default=0.0, compute='_calc_total_sales', string='Total Sales', store=True)
+
+    @api.depends("station_day_end_close_lines_sale_ids", "date_of_closing", "station_id")
+    def _calc_total_sales(self):
+        for rec in self:
+            rec.total_sales = sum(member.line_amount for member in rec.station_day_end_close_lines_sale_ids)
 
     # @api.onchange('date_of_closing')
     # def onchange_date_of_closing(self):
@@ -121,10 +129,10 @@ class station_day_end_close(models.Model):
     def get_list_of_tanks_by_station(self, stationid):
         tank_lines = []
         sql_get_tanks = """
-                        SELECT TankStatus.ID AS tank_code,TankStatus.OilCode, GradeSpecifics.GradeSpecificID, GradeSpecifics.Name
-                        FROM     TankStatus INNER JOIN
-                                          GradeSpecifics ON GradeSpecifics.Code = TankStatus.OilCode
-                        WHERE  (TankStatus.StationID = %s) """
+        SELECT TankStatus.ID AS tank_code,TankStatus.OilCode, GradeSpecifics.GradeSpecificID, GradeSpecifics.Name
+        FROM     TankStatus INNER JOIN
+                          GradeSpecifics ON GradeSpecifics.Code = TankStatus.OilCode
+        WHERE  (TankStatus.StationID = %s) """
         cursor_tanks = cnxn.cursor()
         sql = sql_get_tanks % (stationid)
         cursor_tanks.execute(sql)
@@ -136,16 +144,16 @@ class station_day_end_close(models.Model):
             guns = []
             sql_get_guns = """ SELECT GUNCODE, PORTCODE
 FROM     GunConfig_station
-where TANKCODE= %s   """
+where TANKCODE= %s  and stationid= %s  """
             cursor_guns = cnxn.cursor()
-            sqlgun = sql_get_guns % (tank_code)
+            sqlgun = sql_get_guns % (tank_code, stationid)
             cursor_guns.execute(sqlgun)
             rows_guns = cursor_guns.fetchall()
 
             for row_gun in rows_guns:
                 guns.append((0, 0, {
                     'gun_code': row_gun[0],
-                    # 'station_id': self,
+                    # 'station_id': stationid,
                     'port_code': row_gun[1],
                     # 'tank_id': row_tank[2],
                     'tank_code': tank_code,
@@ -154,7 +162,7 @@ where TANKCODE= %s   """
 
             tank_lines.append((0, 0, {
                 'tank_code': row_tank[0],
-                'station_id': self,
+                'station_id': stationid,
                 'oil_code': row_tank[1],
                 'grade_specific_id': row_tank[2],
                 'gun_ids': guns,
@@ -211,7 +219,7 @@ where TANKCODE= %s   """
                 'tank_ids': tank_lines
             }
             res = self.env['station_operation.station'].create(vals_station)
-        self.update_guns_null_station_id(res.id)
+            self.update_guns_null_station_id(res.id)
 
         return list
 
@@ -259,14 +267,14 @@ where TANKCODE= %s   """
                       TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
                       GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID INNER JOIN
                       GunConfig_station ON OilTransactions.GunId = GunConfig_station.GUNCODE
-    WHERE  (CAST(OilTransactions.TrueTime AS date) = '%s/%s/%s') AND (NOT (OilTransactions.Volume = 0))
+    WHERE  (CAST(OilTransactions.TrueTime AS date) = '%s/%s/%s') AND (NOT (OilTransactions.Volume = 0))  and  OilTransactions.StationID = %s  AND (GunConfig_station.StationID = %s)
     GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code, OilTransactions.GunId, GunConfig_station.TANKCODE
     """
 
         cursor = cnxn.cursor()
         sql = sql_get_sales_sum_by_gun % (
             str(self.date_of_closing.month), str(self.date_of_closing.day)
-            , str(self.date_of_closing.year)
+            , str(self.date_of_closing.year), self.station_id.bs_id, self.station_id.bs_id
         )
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -304,13 +312,15 @@ where TANKCODE= %s   """
             FROM     OilTransactions INNER JOIN
                               TransactionTypes ON TransactionTypes.TransactionTypeID = OilTransactions.TType INNER JOIN
                               GradeSpecifics ON GradeSpecifics.GradeSpecificID = OilTransactions.GradeSpecificID
-            WHERE  (      (CAST(OilTransactions.TrueTime AS date) = '""" + str(
-            self.date_of_closing.month) + """/""" + str(self.date_of_closing.day) + """/""" + str(
-            self.date_of_closing.year) + """') AND (NOT (OilTransactions.Volume = 0)))
+            WHERE  (      (CAST(OilTransactions.TrueTime AS date) = '%s/%s/%s') AND (NOT (OilTransactions.Volume = 0))) and  OilTransactions.StationID = %s
             GROUP BY OilTransactions.StationID, OilTransactions.TType, TransactionTypes.TransactionTypeDesc_en, GradeSpecifics.Name, OilTransactions.PPU, GradeSpecifics.Code
             """
 
         cursor = cnxn.cursor()
+
+        sql_get_sales_sum = sql_get_sales_sum % (
+            str(self.date_of_closing.month), str(self.date_of_closing.day), str(self.date_of_closing.year),
+            self.station_id.bs_id)
         cursor.execute(sql_get_sales_sum)
         rows = cursor.fetchall()
 
@@ -478,8 +488,17 @@ where TANKCODE= %s   """
                                  self.station_day_end_close_lines_sale_by_gun_ids):
                     tank_guns_total_sales = tank_guns_total_sales + gn.qty
 
+                string_sql_count = """SELECT  COUNT(ID) AS Expr1 FROM     TankStatus_log_Station WHERE  (DAY(Time) = %s) AND (MONTH(Time) = %s) AND (YEAR(Time) = %s) AND (ID = %s)"""
+                string_sql_count = string_sql_count % (day, mth, year, tank[0])  # ,self.station_id.bs_id
+                cursor_tanks_count_log = cnxn.cursor()
+                cursor_tanks_count_log.execute(string_sql_count)
+                resultt = cursor_tanks_count_log.fetchall()
+
+                if resultt:
+                    count_log = resultt[0][0]
                 vals = {
                     'tank': tank[0],  # TankCode
+                    'count_log': count_log,  # TankCode
                     'tank_id': self.env['station_operation.tank'].search([('tank_code', '=', tank[0])])[0].id,
                     'opening_qty': tank[3],  # opening_qty
                     'closing_qty': tank[4],  # closing_qty
@@ -548,8 +567,20 @@ class station_day_end_close_sale_line(models.Model):
         for row in self:
             row.forman_diff_qty = row.forman_qty + 888
 
-            # tanks
-            # pumps readings
+    station_name = fields.Char(compute='_calc_station_name', string='Station', store=True)
+    date_calc = fields.Date(compute='_calc_date', string='Date', store=True)
+
+    @api.depends("parent_id")
+    def _calc_station_name(self):
+        for rec in self:
+            if rec.parent_id:
+                rec.station_name = rec.parent_id.station_id.name
+
+    @api.depends("parent_id")
+    def _calc_date(self):
+        for rec in self:
+            if rec.parent_id:
+                rec.date_calc = rec.parent_id.date_of_closing
 
 
 class station_day_end_close_tank_line(models.Model):
@@ -575,6 +606,8 @@ class station_day_end_close_tank_line(models.Model):
     tank_id = fields.Many2one('station_operation.tank')
     product_id = fields.Many2one('product.product')
     product_icon = fields.Char(compute='_calc_product_icon', string='')
+
+    count_log = fields.Integer('Count Log')
 
     @api.depends("product_id")
     def _calc_product_icon(self):

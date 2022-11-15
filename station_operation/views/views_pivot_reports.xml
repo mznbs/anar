@@ -1,0 +1,52 @@
+<odoo>
+    <data>
+
+
+        <!-- stations tree -->
+        <record model="ir.ui.view" id="station_operation.master_stations_sale_line_tree">
+            <field name="name">Sale list</field>
+            <field name="model">station_operation.station_day_end_close_sale_line</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="station_name"/>
+                    <field name="product_id"/>
+                    <field name="qty"/>
+                    <field name="line_amount"/>
+                    <field name="type"/>
+                    <field name="date_calc"/>
+                </tree>
+            </field>
+        </record>
+
+
+
+
+        <!-- actions opening views on models -->
+        <record model="ir.actions.act_window" id="station_operation.station_sale_line_action_window">
+            <field name="name">Stations_Sales</field>
+            <field name="res_model">station_operation.station_day_end_close_sale_line</field>
+            <field name="view_mode">kanban,graph,pivot,tree,form</field>
+        </record>
+
+
+
+
+
+
+
+
+
+
+
+
+        <!-- menu categories -->
+        <menuitem name="Reports" id="station_operation.report" parent="station_operation.menu_root"/>
+
+        <menuitem name="Stations" id="station_operation.station_menu" parent="station_operation.report"
+                  action="station_operation.station_sale_line_action_window"/>
+
+
+
+
+    </data>
+</odoo>

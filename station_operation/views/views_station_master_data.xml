@@ -2,7 +2,7 @@
     <data>
 
 
-        <!-- explicit list view definition -->
+        <!-- stations tree -->
         <record model="ir.ui.view" id="station_operation.master_stations_tree">
             <field name="name">Station list</field>
             <field name="model">station_operation.station</field>
@@ -46,9 +46,11 @@
                                               expand="1" default_order="product_id asc"
                                               class="o_event_registration_view_tree">
                                             <field name="id"/>
+                                            <field name="common_name"/>
                                             <field name="product_id"/>
                                             <field name="product_icon"/>
                                             <field name="tank_code"/>
+                                            <field name="station_id"/>
                                         </tree>
                                     </field>
                                 </group>
@@ -66,6 +68,7 @@
                                                 <field name="product_id"/>
                                                 <field name="product_icon"/>
                                                 <field name="tank_id"/>
+                                                <field name="station_id"/>
 
                                             </tree>
                                         </field>
@@ -88,11 +91,97 @@
         </record>
 
 
+
+
+
+
+
+
+
+
+
+
+         <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <record model="ir.ui.view" id="station_operation.master_tank_tree">
+            <field name="name">tank_list</field>
+            <field name="model">station_operation.tank</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="id"/>
+                    <field name="common_name"/>
+                    <field name="product_icon"/>
+                    <field name="tank_code"/>
+                    <field name="start_date"/>
+                    <field name="oil_code"/>
+                    <field name="gun_ids"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.actions.act_window" id="station_operation.tank_action_window">
+            <field name="name">Tanks</field>
+            <field name="res_model">station_operation.tank</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem name="Tanks" id="station_operation.tank_menu" parent="station_operation.conf"
+                  action="station_operation.tank_action_window"/>
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+        <!-- tanks tree -->
+
+
+
+
+
+
+  <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <record model="ir.ui.view" id="station_operation.master_gun_tree">
+            <field name="name">gun_list</field>
+            <field name="model">station_operation.gun</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="id"/>
+                    <field name="common_name"/>
+                    <field name="product_icon"/>
+                    <field name="gun_code"/>
+                    <field name="tank_id"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.actions.act_window" id="station_operation.gun_action_window">
+            <field name="name">guns</field>
+            <field name="res_model">station_operation.gun</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+        <menuitem name="guns" id="station_operation.gun_menu" parent="station_operation.conf"
+                  action="station_operation.gun_action_window"/>
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+        <!-- guns tree -->
+
+
+
+
+
         <!-- menu categories -->
         <menuitem name="Configration" id="station_operation.conf" parent="station_operation.menu_root"/>
 
         <menuitem name="Stations" id="station_operation.station_menu" parent="station_operation.conf"
                   action="station_operation.station_action_window"/>
+
+
+
 
     </data>
 </odoo>
