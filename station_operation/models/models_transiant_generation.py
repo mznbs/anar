@@ -56,48 +56,43 @@ class station_generate_dates(models.TransientModel):
             if single_date.weekday() == 5 and self.weekday_include_sat == 0: continue
             if single_date.weekday() == 6 and self.weekday_include_sun == 0: continue
 
-            dateExists = self.env['namaa.dates'].sudo().search([
-                ('date_value', '=', single_date.date()),
-                ('AmPm', '=', "AM"),
+            dateExists = self.env['station_operation.station_day_end_close'].sudo().search([
+                ('date_of_closing', '=', single_date.date()),
+                #('AmPm', '=', "AM"),
             ], limit=1)
 
             if (len(dateExists) > 0):
                 continue
 
-            vals_Details_namaa_driver_dates = []
+            vals_Details_station_dates = []
 
             if self.state == "all_stations":
-                employees = self.env['hr.employee'].search([
-                    # ('company_id', '=', self.env.company.id)
-                    ('isDriver', '=', 'True')
-                    # ('id', 'in', self.employee_ids.ids)
-                    #  , ('name', 'ilike', 'هري')
+                stations = self.env['hr.employee'].search([
+                     ('company_id', '=', self.env.company.id)
+                  #  ,('active', '=', 'True')
                 ])
-            elif self.state == "select_drivers":
-                employees = self.env['hr.employee'].search([
+            elif self.state == "select_stations":
+                stations = self.env['station_operation.station'].search([
                     # ('company_id', '=', self.env.company.id)
-                    ('id', 'in', self.employee_ids.ids)
+                    ('id', 'in', self.station_ids.ids)
                 ])
 
-            for employee in employees:
-                vals_Details_namaa_driver_dates.append((0, 0, {
-                    'date': single_date,
-                    'is_confirmed': False,
-                    'hr_employee_id': employee.id
-                }))
+            # for station_ in stations:
+            #     vals_Details_station_dates.append((0, 0, {
+            #         'date': single_date,
+            #         'is_confirmed': False,
+            #         'hr_employee_id': station_.id
+            #     }))
 
             vals = {
-                'nameOfWeekDay': WEEKDAYS[single_date.weekday()],
-                'AmPm': 'AM',
-                'date_value': single_date,
-
-                # 'namaa_driver_date_ids': vals_Details_namaa_driver_dates,
-                'employee_ids': [x[2]['hr_employee_id'] for x in vals_Details_namaa_driver_dates],
+                #'nameOfWeekDay': WEEKDAYS[single_date.weekday()],
+                'date_of_closing': single_date,
+                #'employee_ids': [x[2]['hr_employee_id'] for x in vals_Details_station_dates],
             }
 
-            self.env['namaa.dates'].create(vals)
-            vals['AmPm'] = "PM"
-            self.env['namaa.dates'].create(vals)
+            self.env['station_operation.station_day_end_close'].create(vals)
+            # vals['AmPm'] = "PM"
+            # self.env['station_operation.station_day_end_close'].create(vals)
 
     def reload(self):
         return False
