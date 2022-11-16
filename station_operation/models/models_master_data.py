@@ -27,6 +27,20 @@ class station(models.Model):
                                'station_id')
     gun_ids = fields.One2many('station_operation.gun',
                               'station_id')
+    location_id = fields.Many2one('stock.location')
+
+
+    product_icons = fields.Char("Products",compute='_calc_product_icons')
+
+    @api.depends("tank_ids", "gun_ids")
+    def _calc_product_icons(self):
+        for rec in self:
+            rec.product_icons = ""
+            list_of_icons =[]
+            if rec.tank_ids:
+                for tank in rec.tank_ids:
+                    list_of_icons.append(tank.product_id.station_operation_icon)
+                rec.product_icons += ''.join(set(list_of_icons))
 
 
 class tank(models.Model):
@@ -41,7 +55,7 @@ class tank(models.Model):
         for rec in self:
             rec.common_name = " - "
             if rec.product_id.name:
-                rec.common_name =  rec.product_id.name
+                rec.common_name = rec.product_id.name
             if rec.tank_code:
                 rec.common_name = rec.common_name + " - " + str(rec.tank_code)
             if rec.station_id.name:

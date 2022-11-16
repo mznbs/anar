@@ -1,0 +1,59 @@
+<odoo>
+    <data>
+
+
+        <record id="view_station_genereate_dates" model="ir.ui.view">
+            <field name="name">Day End Closing Generation</field>
+            <field name="model">station.generate.dates</field>
+            <field name="arch" type="xml">
+                <form string="إنشاء التواريخ لفترة">
+                    <sheet>
+                        <group>
+                            <field name="state"/>
+                        </group>
+                        <group colspan="4">
+                            <field name="start_date" widget="date"/>
+                            <field name="end_date" widget="date"/>
+
+                        </group>
+
+                        <group>
+                            <group>
+                                <field name="weekday_include_sun" widget="boolean_toggle"/>
+                                <field name="weekday_include_mon" widget="boolean_toggle" class="oe_inline"/>
+                                <field name="weekday_include_tue" widget="boolean_toggle" class="oe_inline"/>
+                                <field name="weekday_include_wed" widget="boolean_toggle" class="oe_inline"/>
+                                <field name="weekday_include_thu" widget="boolean_toggle" class="oe_inline"/>
+                            </group>
+                            <group>
+                                <field name="weekday_include_fri" widget="boolean_toggle"/>
+                                <field name="weekday_include_sat" widget="boolean_toggle"/>
+                            </group>
+                        </group>
+                        <group states="select_drivers">
+                            <field name="station_ids" widget="many2many_tags"  />
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="generate" string="Generate" type="object" class="btn-primary"/>
+                        <button special="cancel" data-hotkey="z" string="Cancel" class="btn-secondary"/>
+                    </footer>
+
+                </form>
+            </field>
+        </record>
+
+        <record id="action_view_station_genereate_dates" model="ir.actions.act_window">
+            <field name="name">Day End Closing Generation</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">station.generate.dates</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <menuitem name="Day End Closing Generation" id="menu_action_view_station_genereate_dates1" parent="station_operation.trx"
+                  action="action_view_station_genereate_dates"/>
+
+
+    </data>
+</odoo>

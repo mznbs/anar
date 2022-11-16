@@ -8,11 +8,15 @@
             <field name="model">station_operation.station</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="id"/>
+<!--                    <field name="id"/>-->
                     <field name="name"/>
                     <field name="station_code"/>
                     <field name="bs_id"/>
                     <field name="address"/>
+                    <field name="location_id"/>
+                    <field name="product_icons"/>
+                    <field name="tank_ids" widget="many2many_tags"/>
+<!--                    <field name="gun_ids" widget="many2many_tags"/>-->
                 </tree>
             </field>
         </record>
@@ -26,10 +30,11 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="id"/>
+<!--                                <field name="id"/>-->
                                 <field name="name"/>
                                 <field name="station_code"/>
                                 <field name="bs_id"/>
+                                <field name="location_id"/>
                             </group>
                             <group>
                                 <field name="description"/>
@@ -91,17 +96,7 @@
         </record>
 
 
-
-
-
-
-
-
-
-
-
-
-         <!-- tanks tree -->
+        <!-- tanks tree -->
         <!-- tanks tree -->
         <!-- tanks tree -->
         <!-- tanks tree -->
@@ -114,6 +109,8 @@
                     <field name="id"/>
                     <field name="common_name"/>
                     <field name="product_icon"/>
+
+
                     <field name="tank_code"/>
                     <field name="start_date"/>
                     <field name="oil_code"/>
@@ -135,11 +132,7 @@
         <!-- tanks tree -->
 
 
-
-
-
-
-  <!-- guns tree -->
+        <!-- guns tree -->
         <!-- guns tree -->
         <!-- guns tree -->
         <!-- guns tree -->
@@ -162,7 +155,7 @@
             <field name="res_model">station_operation.gun</field>
             <field name="view_mode">tree,form</field>
         </record>
-        <menuitem name="guns" id="station_operation.gun_menu" parent="station_operation.conf"
+        <menuitem name="Guns" id="station_operation.gun_menu" parent="station_operation.conf"
                   action="station_operation.gun_action_window"/>
         <!-- guns tree -->
         <!-- guns tree -->
@@ -171,16 +164,14 @@
         <!-- guns tree -->
 
 
-
-
-
         <!-- menu categories -->
         <menuitem name="Configration" id="station_operation.conf" parent="station_operation.menu_root"/>
 
         <menuitem name="Stations" id="station_operation.station_menu" parent="station_operation.conf"
                   action="station_operation.station_action_window"/>
 
-
+                <menuitem name="Products" id="station_operation.station_menu_products" parent="station_operation.conf"
+                  action="stock.product_template_action_product"/>
 
 
     </data>

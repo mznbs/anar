@@ -11,7 +11,6 @@ FROM     [View_calcHoseReadingDiff] INNER JOIN
 WHERE  (OilTransactions.difference = - 1) OR
                   (OilTransactions.difference IS NULL)
 """
-#
 # cnxnlocal_old = pyodbc.connect(
 #     'DRIVER={ODBC Driver 17 for SQL Server};SERVER=DESKTOP-H7EA1N4;DATABASE=center5;Trusted_Connection=yes;')
 
@@ -40,14 +39,6 @@ def _get_stations(self):
     return list
 
 
-# linking with the main product table
-class station_opertation_template_product(models.Model):
-    _inherit = "product.template"
-
-    evap_loss_accepted_sales = fields.Float(string='Accepted Evaporation Loss% Sales ⛽', digits=(16, 4), default=0.002)
-    evap_loss_accepted_receivings = fields.Float(string='Accepted Evaporation Loss% Receiving 🚛', digits=(16, 4),
-                                                 default=0.002)
-    station_operation_icon = fields.Char(string="", default="")
 
 
 class station_day_end_close(models.Model):
@@ -419,6 +410,10 @@ where TANKCODE= %s  and stationid= %s  """
         for l in self.station_day_end_close_tank_line_ids:
             # 'product_id': self.env['product.product'].search([('name', '=', tank[1])])[0].id,
             location_id = self.env['stock.location'].sudo().search([('name', '=', 'Stock')], limit=1)[0].id
+
+            if self.station_id.location_id:
+                location_id =self.station_id.location_id.id
+
             self.env['stock.quant'].create({
                 'location_id': location_id,
                 'product_id': l.product_id.id,  # .id,
@@ -538,10 +533,21 @@ where TANKCODE= %s  and stationid= %s  """
 
                 self.state = 'tank_calculated'
 
-
 class station_day_end_close_sale_line(models.Model):
     _name = 'station_operation.station_day_end_close_sale_line'
     _description = 'Station Day End Closing Sale Lines'
+    _rec_name = 'common_name'
+
+    common_name = fields.Char('common_name', compute='_calc_name', compute_sudo=True)
+
+    @api.depends("product_id")
+    def _calc_name(self):
+        for rec in self:
+            rec.common_name = rec.station_name#+   str(rec.qty)
+            # if rec.date_calc:
+            #     rec.common_name += str(rec.date_calc or 0) # str( round(rec.line_amount,2) )+"SR "
+            # +  (rec.product_icon or "")
+
 
     name = fields.Char(string="Name")
     parent_id = fields.Many2one('station_operation.station_day_end_close')
@@ -556,7 +562,7 @@ class station_day_end_close_sale_line(models.Model):
     # gun = fields.Char(string="Tank")
     qty = fields.Float(default=0.0, help="Quantity", string='Quantity')
     unit_price = fields.Float(default=0.0, string='Unit Price')
-    line_amount = fields.Float(default=0.0, string='line amount')
+    line_amount = fields.Float(default=0.0, string='Amount')
     type = fields.Char(string="Type")
 
     forman_qty = fields.Float(default=0.0, help="Forman Quantity", string='Forman Quantity')
@@ -573,15 +579,17 @@ class station_day_end_close_sale_line(models.Model):
     @api.depends("parent_id")
     def _calc_station_name(self):
         for rec in self:
+            rec.station_name = ""
             if rec.parent_id:
                 rec.station_name = rec.parent_id.station_id.name
+
 
     @api.depends("parent_id")
     def _calc_date(self):
         for rec in self:
             if rec.parent_id:
-                rec.date_calc = rec.parent_id.date_of_closing
-
+                if rec.parent_id.date_of_closing:
+                    rec.date_calc = rec.parent_id.date_of_closing
 
 class station_day_end_close_tank_line(models.Model):
     _name = 'station_operation.station_day_end_close_tank_line'
@@ -638,7 +646,6 @@ class station_day_end_close_tank_line(models.Model):
                 receiving * rec.qty_in
             # self.env['product.product'].search([('name', '=', rec.product_id)])[0].id,
 
-
 class station_dec_tank_line_details(models.Model):
     _name = 'station_operation.station.dec.tank.line.details'
     _description = 'Station Day End Closing Line Details'
@@ -657,7 +664,6 @@ class station_dec_tank_line_details(models.Model):
     def _calc_name(self):
         for rec in self:
             rec.common_name = str(rec.totalIn)
-
 
 class station_day_end_close_sale_by_gun_line(models.Model):
     _name = 'station_operation.station_day_end_close_sale_by_gun_line'
@@ -720,7 +726,6 @@ select  @opening_before_receiving as openingQty  ,--0
         @date_time_stop_in  as endTime --4
 
 """
-
 sql_update_tank_diff = """  UPDATE TankStatus_log_Station
 SET    difference = View_calcTankDiff.diff
 FROM     View_calcTankDiff INNER JOIN

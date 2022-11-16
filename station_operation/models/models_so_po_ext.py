@@ -1,6 +1,20 @@
 from odoo import models, fields, api
 
 
+
+
+
+class station_opertation_template_product(models.Model):
+    _inherit = "product.template"
+
+    evap_loss_accepted_sales = fields.Float(string='Accepted Evaporation Loss% Sales ⛽', digits=(16, 4), default=0.002)
+    evap_loss_accepted_receivings = fields.Float(string='Accepted Evaporation Loss% Receiving 🚛', digits=(16, 4),
+                                                 default=0.002)
+    station_operation_icon = fields.Char(string="", default="")
+
+
+
+
 class SalesOrderStation(models.Model):
     _inherit = 'sale.order'
 
